@@ -106,29 +106,35 @@ async function loadSources(database) {
   return Object.values(obj).filter((s) => s && s.on && s.url);
 }
 
+// 실제 크롤링 로직 (스케줄 함수와 버튼용 run 함수가 공유)
+export async function runCrawl() {
+  const database = db();
+  const active = await loadSources(database);
+  if (active.length === 0) {
+    return { ok: true, msg: "켜진 출처가 없어요 (모두 꺼짐)", added: 0, total: 0 };
+  }
+
+  const results = await Promise.allSettled(active.map(fetchSource));
+  const fresh = [];
+  results.forEach((r, i) => {
+    if (r.status === "fulfilled") fresh.push(...r.value);
+    else console.error(`${active[i].name} 실패:`, r.reason?.message);
+  });
+
+  const ref = database.ref("feed");
+  const snap = await ref.once("value");
+  const { next, added, total } = mergeFeed(snap.val() || {}, fresh);
+  await ref.set(next);
+
+  return { ok: true, sources: active.length, crawled: fresh.length, added, total,
+           msg: `sources ${active.length}, crawled ${fresh.length}, added ${added}, total ${total}` };
+}
+
 export const handler = async () => {
   try {
-    const database = db();
-    const active = await loadSources(database);
-    if (active.length === 0) {
-      return { statusCode: 200, body: "no active sources (모든 출처가 꺼져 있어요)" };
-    }
-
-    const results = await Promise.allSettled(active.map(fetchSource));
-    const fresh = [];
-    results.forEach((r, i) => {
-      if (r.status === "fulfilled") fresh.push(...r.value);
-      else console.error(`${active[i].name} 실패:`, r.reason?.message);
-    });
-
-    const ref = database.ref("feed");
-    const snap = await ref.once("value");
-    const { next, added, total } = mergeFeed(snap.val() || {}, fresh);
-    await ref.set(next);
-
-    const msg = `sources ${active.length}, crawled ${fresh.length}, added ${added}, total ${total}`;
-    console.log(msg);
-    return { statusCode: 200, body: msg };
+    const r = await runCrawl();
+    console.log(r.msg);
+    return { statusCode: 200, body: r.msg };
   } catch (e) {
     console.error(e);
     return { statusCode: 500, body: e.message };
