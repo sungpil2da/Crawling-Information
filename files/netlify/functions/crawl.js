@@ -4,7 +4,8 @@
 // - 새 글만 Firebase 에 저장 → HTML 은 Firebase 를 실시간 구독만 하면 됨
 // 스케줄: 아래 config.schedule (기본 30분마다). 첫 실행은 CLI 로 수동 트리거.
 
-import admin from "firebase-admin";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getDatabase } from "firebase-admin/database";
 import crypto from "node:crypto";
 
 // ===== 설정: 여기만 바꾸면 됨 =====
@@ -77,12 +78,14 @@ const sortKey = (it) => Date.parse(it.date) || it.addedAt || 0;
 let _app;
 function db() {
   if (!_app) {
-    _app = admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
-      databaseURL: process.env.FIREBASE_DB_URL,
-    });
+    _app = getApps().length
+      ? getApps()[0]
+      : initializeApp({
+          credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+          databaseURL: process.env.FIREBASE_DB_URL,
+        });
   }
-  return admin.database(_app);
+  return getDatabase(_app);
 }
 
 export const handler = async () => {
