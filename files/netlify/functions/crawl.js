@@ -74,14 +74,15 @@ export function mergeFeed(existing, fresh, keep = KEEP, now = Date.now()) {
 const sortKey = (it) => Date.parse(it.date) || it.addedAt || 0;
 
 // ===== Firebase =====
+let _app;
 function db() {
-  if (!admin.apps.length) {
-    admin.initializeApp({
+  if (!_app) {
+    _app = admin.initializeApp({
       credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
       databaseURL: process.env.FIREBASE_DB_URL,
     });
   }
-  return admin.database();
+  return admin.database(_app);
 }
 
 export const handler = async () => {
