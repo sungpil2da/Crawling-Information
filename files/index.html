@@ -21,7 +21,8 @@
   .title{font-family:"Jua",sans-serif; font-size:30px; line-height:1.1; margin:0; display:flex; align-items:center; gap:8px}
   .title .dot{width:12px;height:12px;border-radius:50%;background:var(--honey);display:inline-block}
   .live{font-size:11px; font-weight:700; color:var(--forest); border:1px solid var(--forest); border-radius:999px; padding:1px 8px; margin-left:4px; font-family:"Gothic A1"}
-  .subtitle{margin:4px 0 14px; color:var(--muted); font-size:14px}
+  .subtitle{margin:4px 0 4px; color:var(--muted); font-size:14px}
+  .synced{margin:0 0 14px; color:var(--forest); font-size:13px; font-weight:500}
   .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
   .search{flex:1 1 160px; min-width:140px; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px}
   .search input{border:0; outline:0; width:100%; font:inherit; background:transparent; color:var(--ink)}
@@ -66,6 +67,17 @@
   .summary{margin:0; font-size:14px; color:#5C6055; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
   .pin{position:absolute; top:-8px; right:14px; background:var(--honey); color:var(--honey-ink); font-family:"Jua",sans-serif; font-size:12px; padding:3px 9px; border-radius:6px; transform:rotate(-3deg); box-shadow:0 2px 5px rgba(233,165,34,.35)}
   .card.seen{opacity:.72} .card.seen .tag{background:#EFF0EC; color:var(--muted)}
+  .pickwrap{position:absolute; top:12px; left:12px; display:none}
+  .pickwrap input{width:20px; height:20px; accent-color:var(--forest); cursor:pointer}
+  body.pickmode .pickwrap{display:block}
+  body.pickmode .card{padding-left:44px}
+  .card-top{padding-left:0}
+  /* 복사 선택 팝오버 */
+  .copywrap{position:relative; display:inline-block}
+  .menu{position:absolute; top:calc(100% + 6px); right:0; z-index:30; background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:0 6px 20px rgba(42,46,39,.12); padding:6px; min-width:150px; display:none}
+  .menu.open{display:block}
+  .menu button{display:block; width:100%; text-align:left; font:inherit; font-size:14px; border:0; background:none; cursor:pointer; padding:9px 12px; border-radius:8px; color:var(--ink)}
+  .menu button:hover{background:#F1F3EC}
   .state{text-align:center; padding:48px 16px; color:var(--muted)}
   .state .big{font-family:"Jua",sans-serif; font-size:20px; color:var(--ink); margin-bottom:6px}
   .skel{height:96px; border-radius:var(--radius); background:linear-gradient(90deg,#fff,#F4F5F0,#fff); background-size:200% 100%; animation:sh 1.2s infinite}
@@ -81,6 +93,7 @@
   <header class="board">
     <h1 class="title"><span class="dot"></span>우리동네 생활정보방<span class="live">LIVE</span></h1>
     <p class="subtitle">서울 지역 소식을 실시간으로 모아드려요</p>
+    <p class="synced" id="lastSync">마지막 동기화: 불러오는 중…</p>
     <div class="controls">
       <label class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
@@ -88,7 +101,13 @@
       </label>
       <label class="toggle"><input type="checkbox" id="onlyNew"> 새 글만</label>
       <button class="btn" id="sync">🔄 지금 동기화</button>
-      <button class="btn" id="copy">카톡용 복사</button>
+      <span class="copywrap">
+        <button class="btn" id="copy">카톡용 복사</button>
+        <div class="menu" id="copyMenu">
+          <button id="copyAll">전체 복사</button>
+          <button id="copyPick">개별 선택</button>
+        </div>
+      </span>
       <button class="btn" id="markAll">모두 읽음</button>
     </div>
     <div class="cats" id="cats"></div>
@@ -144,6 +163,7 @@ const seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"));
 const saveSeen = () => localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-3000)));
 let ALL = [];
 let curCat = "전체";   // 선택된 분류
+const picked = new Set();   // 카톡 복사용 체크된 링크들
 const $ = (id) => document.getElementById(id);
 
 function relTime(s){
@@ -184,10 +204,12 @@ function render(){
   feed.innerHTML=items.map(it=>{
     const isNew=!seen.has(it.link);
     return `<article class="card ${isNew?"":"seen"}">${isNew?'<span class="pin">NEW</span>':""}
+      <label class="pickwrap"><input type="checkbox" class="pick" data-link="${esc(it.link)}" ${picked.has(it.link)?"checked":""}></label>
       <div class="card-top"><span class="tag">${esc(it.source)}</span>${it.cat?`<span class="date">· ${esc(it.cat)}</span>`:""}<span class="date">${esc(relTime(it.date))}</span></div>
       <h2><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h2>
       ${it.summary?`<p class="summary">${esc(it.summary)}</p>`:""}</article>`;
   }).join("");
+  if(typeof updateCopyLabel==="function") updateCopyLabel();
 }
 
 // Firebase 실시간 구독 — 함수가 새 글을 넣으면 이 화면이 자동으로 갱신됨
@@ -202,13 +224,31 @@ onValue(ref(database,"feed"), (snap)=>{
   $("feed").innerHTML=`<div class="state"><div class="big">연결에 실패했어요</div>Firebase 설정(firebaseConfig)과 DB 규칙을 확인해주세요.<br><small>(${esc(err.message)})</small></div>`;
 });
 
+// 마지막 동기화 시각 구독
+function syncText(ts){
+  if(!ts) return "마지막 동기화: 아직 없음";
+  const m=Math.floor((Date.now()-ts)/60000);
+  let rel;
+  if(m<1) rel="방금 전"; else if(m<60) rel=m+"분 전";
+  else{const hh=Math.floor(m/60); rel = hh<24 ? hh+"시간 전" : new Date(ts).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});}
+  return "🕒 마지막 동기화: "+rel;
+}
+let lastSyncTs=0;
+onValue(ref(database,"meta/lastSync"), (snap)=>{
+  lastSyncTs=snap.val()||0;
+  $("lastSync").textContent=syncText(lastSyncTs);
+});
+// 1분마다 "N분 전" 표기 갱신
+setInterval(()=>{ if(lastSyncTs) $("lastSync").textContent=syncText(lastSyncTs); }, 60000);
+
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1800);}
-function copyForKakao(){
-  const items=visibleItems();
-  if(!items.length){toast("복사할 소식이 없어요");return;}
+function doCopy(chosen){
+  if(!chosen.length){toast("복사할 소식이 없어요");return;}
   const today=new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
-  const text=`📢 우리동네 새 소식 (${today})\n\n`+items.map((it,i)=>`${i+1}. [${it.source}] ${it.title}\n${it.link}`).join("\n\n");
-  navigator.clipboard.writeText(text).then(()=>toast("복사 완료! 카톡방에 붙여넣으세요"),()=>toast("복사 실패"));
+  const text=`📢 우리동네 새 소식 (${today})\n\n`+chosen.map((it,i)=>`${i+1}. [${it.source}] ${it.title}\n${it.link}`).join("\n\n");
+  navigator.clipboard.writeText(text).then(
+    ()=>toast(`${chosen.length}개 복사 완료! 카톡방에 붙여넣으세요`),
+    ()=>toast("복사 실패"));
 }
 $("cats").addEventListener("click",(e)=>{
   const b=e.target.closest(".cat"); if(!b) return;
@@ -216,7 +256,58 @@ $("cats").addEventListener("click",(e)=>{
 });
 $("q").addEventListener("input",render);
 $("onlyNew").addEventListener("change",render);
-$("copy").addEventListener("click",copyForKakao);
+// ===== 카톡 복사: 전체 / 개별 선택 =====
+let pickMode = false;
+function updateCopyLabel(){
+  // 개별선택 모드에서는 "선택 완료(N)", 아니면 "카톡용 복사"
+  $("copy").textContent = pickMode ? `선택 완료 (${picked.size})` : "카톡용 복사";
+}
+function enterPickMode(){
+  pickMode = true;
+  document.body.classList.add("pickmode");
+  $("copyMenu").classList.remove("open");
+  updateCopyLabel();
+  toast("복사할 소식을 체크하고 ‘선택 완료’를 누르세요");
+}
+function exitPickMode(){
+  pickMode = false;
+  document.body.classList.remove("pickmode");
+  picked.clear();
+  document.querySelectorAll(".pick").forEach(cb=>cb.checked=false);
+  updateCopyLabel();
+}
+// 카드 체크박스 → picked 갱신
+$("feed").addEventListener("change",(e)=>{
+  const cb=e.target.closest(".pick"); if(!cb) return;
+  if(cb.checked) picked.add(cb.dataset.link); else picked.delete(cb.dataset.link);
+  updateCopyLabel();
+});
+// "카톡용 복사" 버튼: 모드에 따라 동작
+$("copy").addEventListener("click",(e)=>{
+  e.stopPropagation();
+  if(pickMode){
+    // 선택 완료 → 체크된 것만 복사 후 모드 종료
+    const chosen=visibleItems().filter(it=>picked.has(it.link));
+    if(!chosen.length){ toast("선택된 소식이 없어요"); return; }
+    doCopy(chosen); exitPickMode();
+  }else{
+    // 메뉴 토글 (전체/개별)
+    $("copyMenu").classList.toggle("open");
+  }
+});
+$("copyAll").addEventListener("click",(e)=>{
+  e.stopPropagation();
+  $("copyMenu").classList.remove("open");
+  doCopy(visibleItems());
+});
+$("copyPick").addEventListener("click",(e)=>{
+  e.stopPropagation();
+  enterPickMode();
+});
+// 바깥(복사 위젯 밖) 클릭 시에만 메뉴 닫기
+document.addEventListener("click",(e)=>{
+  if(!e.target.closest(".copywrap")) $("copyMenu").classList.remove("open");
+});
 $("markAll").addEventListener("click",()=>{ALL.forEach(it=>seen.add(it.link));saveSeen();render();
   $("meta").textContent=$("meta").textContent.replace(/새 글 \d+개/,"새 글 0개");toast("모두 읽음 처리했어요");});
 
