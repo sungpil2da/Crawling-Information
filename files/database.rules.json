@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "feed": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}

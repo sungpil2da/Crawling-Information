@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리동네 생활정보방 · 서울</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1EA; --card:#FFFFFF; --ink:#2A2E27; --muted:#7A7E72;
+    --honey:#E9A522; --honey-ink:#7A5205; --forest:#3C6E52; --line:#E0E2D8; --radius:14px;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--paper); color:var(--ink);
+    font-family:"Gothic A1",system-ui,sans-serif; font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:600px; margin:0 auto; padding:0 16px 64px}
+  .board{position:sticky; top:0; z-index:10; background:var(--paper); padding-top:18px}
+  .board::after{content:""; display:block; height:1px; background:var(--line); margin-top:14px}
+  .title{font-family:"Jua",sans-serif; font-size:30px; line-height:1.1; margin:0; display:flex; align-items:center; gap:8px}
+  .title .dot{width:12px;height:12px;border-radius:50%;background:var(--honey);display:inline-block}
+  .live{font-size:11px; font-weight:700; color:var(--forest); border:1px solid var(--forest); border-radius:999px; padding:1px 8px; margin-left:4px; font-family:"Gothic A1"}
+  .subtitle{margin:4px 0 14px; color:var(--muted); font-size:14px}
+  .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .search{flex:1 1 160px; min-width:140px; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px}
+  .search input{border:0; outline:0; width:100%; font:inherit; background:transparent; color:var(--ink)}
+  .search svg{flex:0 0 auto; color:var(--muted)}
+  button,.toggle{font:inherit; cursor:pointer}
+  .btn{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px; color:var(--ink); font-weight:500; transition:border-color .15s}
+  .btn:hover{border-color:var(--forest)}
+  .btn:focus-visible,.search:focus-within,.toggle:focus-visible{outline:2px solid var(--honey); outline-offset:2px}
+  .toggle{display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); user-select:none}
+  .toggle input{accent-color:var(--forest); width:16px; height:16px}
+  .feed{margin-top:20px; display:flex; flex-direction:column; gap:14px}
+  .card{position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 16px 14px; transition:transform .12s ease, box-shadow .12s ease}
+  .card:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(42,46,39,.06)}
+  .card-top{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+  .tag{font-size:12px; font-weight:700; color:var(--forest); background:#EAF1EC; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .date{font-size:12px; color:var(--muted)}
+  .card h2{margin:0 0 6px; font-size:17px; line-height:1.4; font-weight:700}
+  .card h2 a{color:var(--ink); text-decoration:none}
+  .card h2 a:hover{text-decoration:underline; text-decoration-color:var(--honey)}
+  .summary{margin:0; font-size:14px; color:#5C6055; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .pin{position:absolute; top:-8px; right:14px; background:var(--honey); color:var(--honey-ink); font-family:"Jua",sans-serif; font-size:12px; padding:3px 9px; border-radius:6px; transform:rotate(-3deg); box-shadow:0 2px 5px rgba(233,165,34,.35)}
+  .card.seen{opacity:.72} .card.seen .tag{background:#EFF0EC; color:var(--muted)}
+  .state{text-align:center; padding:48px 16px; color:var(--muted)}
+  .state .big{font-family:"Jua",sans-serif; font-size:20px; color:var(--ink); margin-bottom:6px}
+  .skel{height:96px; border-radius:var(--radius); background:linear-gradient(90deg,#fff,#F4F5F0,#fff); background-size:200% 100%; animation:sh 1.2s infinite}
+  @keyframes sh{to{background-position:-200% 0}}
+  footer{margin-top:22px; text-align:center; color:var(--muted); font-size:12px}
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="board">
+    <h1 class="title"><span class="dot"></span>우리동네 생활정보방<span class="live">LIVE</span></h1>
+    <p class="subtitle">서울 지역 소식을 실시간으로 모아드려요</p>
+    <div class="controls">
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="q" type="search" placeholder="검색 (예: 축제, 모집)" aria-label="소식 검색">
+      </label>
+      <label class="toggle"><input type="checkbox" id="onlyNew"> 새 글만</label>
+      <button class="btn" id="copy">카톡용 복사</button>
+      <button class="btn" id="markAll">모두 읽음</button>
+    </div>
+  </header>
+  <main class="feed" id="feed" aria-live="polite">
+    <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+  </main>
+  <footer id="meta"></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ⬇⬇⬇ Firebase 콘솔 > 프로젝트 설정 > 내 앱(웹) 에서 복사해 붙여넣기 ⬇⬇⬇
+const firebaseConfig = {
+  apiKey: "여기에_붙여넣기",
+  authDomain: "여기에_붙여넣기",
+  databaseURL: "https://여기에_붙여넣기.firebaseio.com",
+  projectId: "여기에_붙여넣기",
+  appId: "여기에_붙여넣기",
+};
+// ⬆⬆⬆ 여기까지 ⬆⬆⬆
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+const SEEN_KEY = "dongnae_seen_v1";
+const seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"));
+const saveSeen = () => localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-3000)));
+let ALL = [];
+const $ = (id) => document.getElementById(id);
+
+function relTime(s){
+  const t=Date.parse(s); if(!t) return s?s.slice(0,16):"";
+  const m=Math.floor((Date.now()-t)/60000);
+  if(m<1)return"방금"; if(m<60)return m+"분 전";
+  const h=Math.floor(m/60); if(h<24)return h+"시간 전";
+  const d=Math.floor(h/24); if(d<7)return d+"일 전";
+  return new Date(t).toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"});
+}
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function visibleItems(){
+  const q=$("q").value.trim(), onlyNew=$("onlyNew").checked;
+  return ALL.filter(it=>{
+    if(onlyNew && seen.has(it.link)) return false;
+    if(q && !(it.title+it.summary+it.source).includes(q)) return false;
+    return true;
+  });
+}
+function render(){
+  const items=visibleItems(), feed=$("feed");
+  if(!items.length){
+    feed.innerHTML=`<div class="state"><div class="big">텅 비었네요</div>${$("onlyNew").checked?"새로 올라온 소식이 없어요. ‘새 글만’을 꺼보세요.":"아직 수집된 소식이 없어요."}</div>`;
+    return;
+  }
+  feed.innerHTML=items.map(it=>{
+    const isNew=!seen.has(it.link);
+    return `<article class="card ${isNew?"":"seen"}">${isNew?'<span class="pin">NEW</span>':""}
+      <div class="card-top"><span class="tag">${esc(it.source)}</span><span class="date">${esc(relTime(it.date))}</span></div>
+      <h2><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h2>
+      ${it.summary?`<p class="summary">${esc(it.summary)}</p>`:""}</article>`;
+  }).join("");
+}
+
+// Firebase 실시간 구독 — 함수가 새 글을 넣으면 이 화면이 자동으로 갱신됨
+onValue(ref(database,"feed"), (snap)=>{
+  const val=snap.val()||{};
+  ALL=Object.values(val).sort((a,b)=>(Date.parse(b.date)||b.addedAt||0)-(Date.parse(a.date)||a.addedAt||0));
+  const nc=ALL.filter(it=>!seen.has(it.link)).length;
+  $("meta").textContent=`총 ${ALL.length}개 · 새 글 ${nc}개 · 실시간 동기화 중`;
+  render();
+}, (err)=>{
+  $("feed").innerHTML=`<div class="state"><div class="big">연결에 실패했어요</div>Firebase 설정(firebaseConfig)과 DB 규칙을 확인해주세요.<br><small>(${esc(err.message)})</small></div>`;
+});
+
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1800);}
+function copyForKakao(){
+  const items=visibleItems();
+  if(!items.length){toast("복사할 소식이 없어요");return;}
+  const today=new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  const text=`📢 우리동네 새 소식 (${today})\n\n`+items.map((it,i)=>`${i+1}. [${it.source}] ${it.title}\n${it.link}`).join("\n\n");
+  navigator.clipboard.writeText(text).then(()=>toast("복사 완료! 카톡방에 붙여넣으세요"),()=>toast("복사 실패"));
+}
+$("q").addEventListener("input",render);
+$("onlyNew").addEventListener("change",render);
+$("copy").addEventListener("click",copyForKakao);
+$("markAll").addEventListener("click",()=>{ALL.forEach(it=>seen.add(it.link));saveSeen();render();
+  $("meta").textContent=$("meta").textContent.replace(/새 글 \d+개/,"새 글 0개");toast("모두 읽음 처리했어요");});
+</script>
+</body>
+</html>
