@@ -32,6 +32,10 @@
   .btn:focus-visible,.search:focus-within,.toggle:focus-visible{outline:2px solid var(--honey); outline-offset:2px}
   .toggle{display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); user-select:none}
   .toggle input{accent-color:var(--forest); width:16px; height:16px}
+  .cats{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px}
+  .cat{font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); border-radius:999px; padding:5px 13px; transition:all .12s}
+  .cat:hover{border-color:var(--forest)}
+  .cat.on{background:var(--forest); border-color:var(--forest); color:#fff; font-weight:700}
   .feed{margin-top:20px; display:flex; flex-direction:column; gap:14px}
   .card{position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 16px 14px; transition:transform .12s ease, box-shadow .12s ease}
   .card:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(42,46,39,.06)}
@@ -68,6 +72,7 @@
       <button class="btn" id="copy">카톡용 복사</button>
       <button class="btn" id="markAll">모두 읽음</button>
     </div>
+    <div class="cats" id="cats"></div>
   </header>
   <main class="feed" id="feed" aria-live="polite">
     <div class="skel"></div><div class="skel"></div><div class="skel"></div>
@@ -100,6 +105,7 @@ const SEEN_KEY = "dongnae_seen_v1";
 const seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"));
 const saveSeen = () => localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-3000)));
 let ALL = [];
+let curCat = "전체";   // 선택된 분류
 const $ = (id) => document.getElementById(id);
 
 function relTime(s){
@@ -115,10 +121,21 @@ const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;
 function visibleItems(){
   const q=$("q").value.trim(), onlyNew=$("onlyNew").checked;
   return ALL.filter(it=>{
+    if(curCat!=="전체" && (it.cat||"기타")!==curCat) return false;
     if(onlyNew && seen.has(it.link)) return false;
     if(q && !(it.title+it.summary+it.source).includes(q)) return false;
     return true;
   });
+}
+// 칩 UI 그리기: 전체 + 데이터에 존재하는 분류들, 각 개수 표시
+function renderCats(){
+  const counts={};
+  ALL.forEach(it=>{const c=it.cat||"기타"; counts[c]=(counts[c]||0)+1;});
+  const cats=["전체", ...Object.keys(counts).sort()];
+  $("cats").innerHTML=cats.map(c=>{
+    const n = c==="전체" ? ALL.length : counts[c];
+    return `<button class="cat ${c===curCat?"on":""}" data-cat="${esc(c)}">${esc(c)} ${n}</button>`;
+  }).join("");
 }
 function render(){
   const items=visibleItems(), feed=$("feed");
@@ -129,7 +146,7 @@ function render(){
   feed.innerHTML=items.map(it=>{
     const isNew=!seen.has(it.link);
     return `<article class="card ${isNew?"":"seen"}">${isNew?'<span class="pin">NEW</span>':""}
-      <div class="card-top"><span class="tag">${esc(it.source)}</span><span class="date">${esc(relTime(it.date))}</span></div>
+      <div class="card-top"><span class="tag">${esc(it.source)}</span>${it.cat?`<span class="date">· ${esc(it.cat)}</span>`:""}<span class="date">${esc(relTime(it.date))}</span></div>
       <h2><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h2>
       ${it.summary?`<p class="summary">${esc(it.summary)}</p>`:""}</article>`;
   }).join("");
@@ -141,6 +158,7 @@ onValue(ref(database,"feed"), (snap)=>{
   ALL=Object.values(val).sort((a,b)=>(Date.parse(b.date)||b.addedAt||0)-(Date.parse(a.date)||a.addedAt||0));
   const nc=ALL.filter(it=>!seen.has(it.link)).length;
   $("meta").textContent=`총 ${ALL.length}개 · 새 글 ${nc}개 · 실시간 동기화 중`;
+  renderCats();
   render();
 }, (err)=>{
   $("feed").innerHTML=`<div class="state"><div class="big">연결에 실패했어요</div>Firebase 설정(firebaseConfig)과 DB 규칙을 확인해주세요.<br><small>(${esc(err.message)})</small></div>`;
@@ -154,6 +172,10 @@ function copyForKakao(){
   const text=`📢 우리동네 새 소식 (${today})\n\n`+items.map((it,i)=>`${i+1}. [${it.source}] ${it.title}\n${it.link}`).join("\n\n");
   navigator.clipboard.writeText(text).then(()=>toast("복사 완료! 카톡방에 붙여넣으세요"),()=>toast("복사 실패"));
 }
+$("cats").addEventListener("click",(e)=>{
+  const b=e.target.closest(".cat"); if(!b) return;
+  curCat=b.dataset.cat; renderCats(); render();
+});
 $("q").addEventListener("input",render);
 $("onlyNew").addEventListener("change",render);
 $("copy").addEventListener("click",copyForKakao);
