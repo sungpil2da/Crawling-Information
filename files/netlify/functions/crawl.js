@@ -10,10 +10,13 @@ import crypto from "node:crypto";
 
 // ===== 설정: 여기만 바꾸면 됨 =====
 const SOURCES = [
-  { name: "서울신문",   url: "https://www.seoul.co.kr/xml/rss/rss_society.xml" },
-  { name: "SBS 지역",  url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08" },
-  { name: "경향 지역", url: "https://www.khan.co.kr/rss/rssdata/local_news.xml" },
-  { name: "오마이뉴스", url: "http://rss.ohmynews.com/rss/ohmynews.xml" },
+  { name: "서울신문",     cat: "뉴스",   url: "https://www.seoul.co.kr/xml/rss/rss_society.xml" },
+  { name: "SBS 지역",    cat: "뉴스",   url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08" },
+  { name: "경향 지역",   cat: "뉴스",   url: "https://www.khan.co.kr/rss/rssdata/local_news.xml" },
+  { name: "오마이뉴스",   cat: "뉴스",   url: "http://rss.ohmynews.com/rss/ohmynews.xml" },
+  { name: "경향 문화",   cat: "문화",   url: "https://www.khan.co.kr/rss/rssdata/culture_news.xml" },
+  { name: "SBS 문화연예", cat: "문화",   url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07" },
+  { name: "서울신문 생활", cat: "생활",   url: "https://www.seoul.co.kr/xml/rss/rss_life.xml" },
 ];
 // 서울 동네 키워드 (제목/요약에 하나라도 있어야 통과). 전부 받으려면 [] 로.
 const KEYWORDS = ["서울", "강서", "마곡", "축제", "행사", "공지", "모집", "무료", "문화"];
@@ -50,7 +53,7 @@ async function fetchSource(src) {
     const summary = pick(b, "description").slice(0, 180);
     const date = pick(b, "pubDate") || pick(b, "dc:date") || "";
     if (!matchKeyword(title + " " + summary)) continue;
-    items.push({ source: src.name, title, link, summary, date });
+    items.push({ source: src.name, cat: src.cat || "기타", title, link, summary, date });
   }
   return items;
 }
