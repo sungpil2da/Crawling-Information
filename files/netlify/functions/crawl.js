@@ -125,6 +125,7 @@ export async function runCrawl() {
   const snap = await ref.once("value");
   const { next, added, total } = mergeFeed(snap.val() || {}, fresh);
   await ref.set(next);
+  await database.ref("meta").update({ lastSync: Date.now(), lastCount: total });
 
   return { ok: true, sources: active.length, crawled: fresh.length, added, total,
            msg: `sources ${active.length}, crawled ${fresh.length}, added ${added}, total ${total}` };
