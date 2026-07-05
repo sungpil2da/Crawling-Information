@@ -36,6 +36,24 @@
   .cat{font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); border-radius:999px; padding:5px 13px; transition:all .12s}
   .cat:hover{border-color:var(--forest)}
   .cat.on{background:var(--forest); border-color:var(--forest); color:#fff; font-weight:700}
+  .admin{margin-top:16px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); overflow:hidden}
+  .admin summary{cursor:pointer; padding:14px 16px; font-family:"Jua",sans-serif; font-size:16px; list-style:none; user-select:none}
+  .admin summary::-webkit-details-marker{display:none}
+  .admin summary::before{content:"⚙️ "}
+  .admin .body{padding:0 16px 16px}
+  .src{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line)}
+  .src input[type=checkbox]{width:18px; height:18px; accent-color:var(--forest); flex:0 0 auto}
+  .src .info{flex:1; min-width:0}
+  .src .nm{font-weight:700; font-size:14px}
+  .src .u{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .src .badge{font-size:11px; color:var(--forest); background:#EAF1EC; padding:2px 7px; border-radius:999px; flex:0 0 auto}
+  .src .del{flex:0 0 auto; border:0; background:none; cursor:pointer; color:#C0503A; font-size:18px; line-height:1; padding:4px}
+  .addform{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; padding-top:14px; border-top:2px solid var(--line)}
+  .addform input, .addform select{font:inherit; font-size:14px; border:1px solid var(--line); border-radius:10px; padding:8px 10px}
+  .addform input.url{flex:1 1 100%}
+  .addform input.nm{flex:1 1 140px}
+  .addform .add{background:var(--forest); color:#fff; border:0; border-radius:10px; padding:8px 16px; font-weight:700; cursor:pointer}
+  .admin .hint{font-size:12px; color:var(--muted); margin:10px 0 0}
   .feed{margin-top:20px; display:flex; flex-direction:column; gap:14px}
   .card{position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 16px 14px; transition:transform .12s ease, box-shadow .12s ease}
   .card:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(42,46,39,.06)}
@@ -74,6 +92,25 @@
     </div>
     <div class="cats" id="cats"></div>
   </header>
+  <details class="admin">
+    <summary>출처 관리 (RSS 켜기/끄기 · 추가/삭제)</summary>
+    <div class="body">
+      <div id="srcList"></div>
+      <div class="addform">
+        <input class="url" id="newUrl" type="url" placeholder="RSS 주소 (https://...xml)">
+        <input class="nm" id="newName" type="text" placeholder="이름 (예: 서울신문)">
+        <select id="newCat">
+          <option value="뉴스">뉴스</option>
+          <option value="문화">문화</option>
+          <option value="생활">생활</option>
+          <option value="공지">공지</option>
+          <option value="기타">기타</option>
+        </select>
+        <button class="add" id="addSrc">추가</button>
+      </div>
+      <p class="hint">체크를 켜고/끄면 다음 크롤링부터 반영돼요. 변경 후 새 소식은 최대 30분 뒤(또는 수동 실행 시 바로) 들어옵니다.</p>
+    </div>
+  </details>
   <main class="feed" id="feed" aria-live="polite">
     <div class="skel"></div><div class="skel"></div><div class="skel"></div>
   </main>
@@ -83,7 +120,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // ⬇⬇⬇ Firebase 콘솔 > 프로젝트 설정 > 내 앱(웹) 에서 복사해 붙여넣기 ⬇⬇⬇
 const firebaseConfig = {
@@ -181,6 +218,53 @@ $("onlyNew").addEventListener("change",render);
 $("copy").addEventListener("click",copyForKakao);
 $("markAll").addEventListener("click",()=>{ALL.forEach(it=>seen.add(it.link));saveSeen();render();
   $("meta").textContent=$("meta").textContent.replace(/새 글 \d+개/,"새 글 0개");toast("모두 읽음 처리했어요");});
+
+// ===== 출처 관리 (Firebase sources 실시간) =====
+const sourcesRef = ref(database, "sources");
+let SRC = {};   // {id: {name,url,cat,on}}
+onValue(sourcesRef, (snap)=>{
+  SRC = snap.val() || {};
+  renderSrc();
+});
+function renderSrc(){
+  const el=$("srcList");
+  const ids=Object.keys(SRC);
+  if(!ids.length){ el.innerHTML=`<p class="hint" style="margin-top:12px">아직 등록된 출처가 없어요. 아래에서 추가하거나, 크롤러가 한 번 돌면 기본 목록이 채워져요.</p>`; return; }
+  el.innerHTML=ids.map(id=>{
+    const s=SRC[id]||{};
+    return `<div class="src">
+      <input type="checkbox" data-id="${id}" ${s.on?"checked":""}>
+      <div class="info"><div class="nm">${esc(s.name||"(이름없음)")} <span class="badge">${esc(s.cat||"기타")}</span></div>
+      <div class="u">${esc(s.url||"")}</div></div>
+      <button class="del" data-del="${id}" title="삭제">✕</button>
+    </div>`;
+  }).join("");
+}
+// 토글
+$("srcList").addEventListener("change",(e)=>{
+  const cb=e.target.closest("input[type=checkbox]"); if(!cb) return;
+  update(ref(database,"sources/"+cb.dataset.id), { on: cb.checked })
+    .then(()=>toast(cb.checked?"켰어요":"껐어요"))
+    .catch(err=>toast("실패: "+err.message));
+});
+// 삭제
+$("srcList").addEventListener("click",(e)=>{
+  const b=e.target.closest("[data-del]"); if(!b) return;
+  const s=SRC[b.dataset.del]||{};
+  if(!confirm(`'${s.name||"이 출처"}'를 삭제할까요?`)) return;
+  remove(ref(database,"sources/"+b.dataset.del))
+    .then(()=>toast("삭제했어요"))
+    .catch(err=>toast("실패: "+err.message));
+});
+// 추가
+$("addSrc").addEventListener("click",()=>{
+  const url=$("newUrl").value.trim(), name=$("newName").value.trim(), cat=$("newCat").value;
+  if(!/^https?:\/\//.test(url)){ toast("올바른 RSS 주소(https://)를 입력하세요"); return; }
+  if(!name){ toast("이름을 입력하세요"); return; }
+  push(sourcesRef, { name, url, cat, on: true })
+    .then(()=>{ $("newUrl").value=""; $("newName").value=""; toast("추가했어요! 다음 크롤링부터 반영돼요"); })
+    .catch(err=>toast("실패: "+err.message));
+});
 </script>
 </body>
 </html>
