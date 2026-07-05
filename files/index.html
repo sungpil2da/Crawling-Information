@@ -78,6 +78,8 @@
   .menu.open{display:block}
   .menu button{display:block; width:100%; text-align:left; font:inherit; font-size:14px; border:0; background:none; cursor:pointer; padding:9px 12px; border-radius:8px; color:var(--ink)}
   .menu button:hover{background:#F1F3EC}
+  .btn-danger{color:#C0503A}
+  #delAll{color:#C0503A}
   .state{text-align:center; padding:48px 16px; color:var(--muted)}
   .state .big{font-family:"Jua",sans-serif; font-size:20px; color:var(--ink); margin-bottom:6px}
   .skel{height:96px; border-radius:var(--radius); background:linear-gradient(90deg,#fff,#F4F5F0,#fff); background-size:200% 100%; animation:sh 1.2s infinite}
@@ -106,6 +108,13 @@
         <div class="menu" id="copyMenu">
           <button id="copyAll">전체 복사</button>
           <button id="copyPick">개별 선택</button>
+        </div>
+      </span>
+      <span class="copywrap">
+        <button class="btn btn-danger" id="del">기사 삭제</button>
+        <div class="menu" id="delMenu">
+          <button id="delAll">전체 삭제</button>
+          <button id="delPick">개별 선택</button>
         </div>
       </span>
       <button class="btn" id="markAll">모두 읽음</button>
@@ -215,7 +224,7 @@ function render(){
 // Firebase 실시간 구독 — 함수가 새 글을 넣으면 이 화면이 자동으로 갱신됨
 onValue(ref(database,"feed"), (snap)=>{
   const val=snap.val()||{};
-  ALL=Object.values(val).sort((a,b)=>(Date.parse(b.date)||b.addedAt||0)-(Date.parse(a.date)||a.addedAt||0));
+  ALL=Object.entries(val).map(([k,v])=>({...v,_key:k})).sort((a,b)=>(Date.parse(b.date)||b.addedAt||0)-(Date.parse(a.date)||a.addedAt||0));
   const nc=ALL.filter(it=>!seen.has(it.link)).length;
   $("meta").textContent=`총 ${ALL.length}개 · 새 글 ${nc}개 · 실시간 동기화 중`;
   renderCats();
@@ -256,57 +265,84 @@ $("cats").addEventListener("click",(e)=>{
 });
 $("q").addEventListener("input",render);
 $("onlyNew").addEventListener("change",render);
-// ===== 카톡 복사: 전체 / 개별 선택 =====
-let pickMode = false;
-function updateCopyLabel(){
-  // 개별선택 모드에서는 "선택 완료(N)", 아니면 "카톡용 복사"
-  $("copy").textContent = pickMode ? `선택 완료 (${picked.size})` : "카톡용 복사";
+// ===== 복사/삭제 공용: 전체 / 개별 선택 =====
+// pickMode: null | "copy" | "delete"  — 개별 선택 모드에서 어떤 작업인지
+let pickMode = null;
+function updateModeLabels(){
+  $("copy").textContent = pickMode==="copy"   ? `선택 복사 (${picked.size})` : "카톡용 복사";
+  $("del").textContent  = pickMode==="delete" ? `선택 삭제 (${picked.size})` : "기사 삭제";
 }
-function enterPickMode(){
-  pickMode = true;
+function enterPickMode(mode){
+  pickMode = mode;
   document.body.classList.add("pickmode");
   $("copyMenu").classList.remove("open");
-  updateCopyLabel();
-  toast("복사할 소식을 체크하고 ‘선택 완료’를 누르세요");
+  $("delMenu").classList.remove("open");
+  picked.clear();
+  document.querySelectorAll(".pick").forEach(cb=>cb.checked=false);
+  updateModeLabels();
+  toast(mode==="copy" ? "복사할 소식을 체크하고 ‘선택 복사’를 누르세요" : "삭제할 소식을 체크하고 ‘선택 삭제’를 누르세요");
 }
 function exitPickMode(){
-  pickMode = false;
+  pickMode = null;
   document.body.classList.remove("pickmode");
   picked.clear();
   document.querySelectorAll(".pick").forEach(cb=>cb.checked=false);
-  updateCopyLabel();
+  updateModeLabels();
 }
+// 호환용 별칭 (render 에서 호출)
+function updateCopyLabel(){ updateModeLabels(); }
+
 // 카드 체크박스 → picked 갱신
 $("feed").addEventListener("change",(e)=>{
   const cb=e.target.closest(".pick"); if(!cb) return;
   if(cb.checked) picked.add(cb.dataset.link); else picked.delete(cb.dataset.link);
-  updateCopyLabel();
+  updateModeLabels();
 });
-// "카톡용 복사" 버튼: 모드에 따라 동작
+
+// 여러 기사 한 번에 삭제 (link 기준으로 _key 찾아서 remove)
+function deleteItems(chosen){
+  if(!chosen.length){ toast("삭제할 소식이 없어요"); return; }
+  if(!confirm(`${chosen.length}개 기사를 삭제할까요?`)) return;
+  const updates={};
+  chosen.forEach(it=>{ if(it._key) updates["feed/"+it._key]=null; });
+  update(ref(database), updates)
+    .then(()=>toast(`${chosen.length}개 삭제했어요`))
+    .catch(err=>toast("삭제 실패: "+err.message));
+}
+
+// ----- 카톡용 복사 버튼 -----
 $("copy").addEventListener("click",(e)=>{
   e.stopPropagation();
-  if(pickMode){
-    // 선택 완료 → 체크된 것만 복사 후 모드 종료
+  if(pickMode==="copy"){
     const chosen=visibleItems().filter(it=>picked.has(it.link));
     if(!chosen.length){ toast("선택된 소식이 없어요"); return; }
     doCopy(chosen); exitPickMode();
   }else{
-    // 메뉴 토글 (전체/개별)
+    $("delMenu").classList.remove("open");
     $("copyMenu").classList.toggle("open");
   }
 });
-$("copyAll").addEventListener("click",(e)=>{
+$("copyAll").addEventListener("click",(e)=>{ e.stopPropagation(); $("copyMenu").classList.remove("open"); doCopy(visibleItems()); });
+$("copyPick").addEventListener("click",(e)=>{ e.stopPropagation(); enterPickMode("copy"); });
+
+// ----- 기사 삭제 버튼 -----
+$("del").addEventListener("click",(e)=>{
   e.stopPropagation();
-  $("copyMenu").classList.remove("open");
-  doCopy(visibleItems());
+  if(pickMode==="delete"){
+    const chosen=visibleItems().filter(it=>picked.has(it.link));
+    if(!chosen.length){ toast("선택된 기사가 없어요"); return; }
+    deleteItems(chosen); exitPickMode();
+  }else{
+    $("copyMenu").classList.remove("open");
+    $("delMenu").classList.toggle("open");
+  }
 });
-$("copyPick").addEventListener("click",(e)=>{
-  e.stopPropagation();
-  enterPickMode();
-});
-// 바깥(복사 위젯 밖) 클릭 시에만 메뉴 닫기
+$("delAll").addEventListener("click",(e)=>{ e.stopPropagation(); $("delMenu").classList.remove("open"); deleteItems(visibleItems()); });
+$("delPick").addEventListener("click",(e)=>{ e.stopPropagation(); enterPickMode("delete"); });
+
+// 바깥 클릭 시 메뉴 닫기
 document.addEventListener("click",(e)=>{
-  if(!e.target.closest(".copywrap")) $("copyMenu").classList.remove("open");
+  if(!e.target.closest(".copywrap")){ $("copyMenu").classList.remove("open"); $("delMenu").classList.remove("open"); }
 });
 $("markAll").addEventListener("click",()=>{ALL.forEach(it=>seen.add(it.link));saveSeen();render();
   $("meta").textContent=$("meta").textContent.replace(/새 글 \d+개/,"새 글 0개");toast("모두 읽음 처리했어요");});
