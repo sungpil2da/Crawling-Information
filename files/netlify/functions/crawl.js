@@ -9,15 +9,17 @@ import { getDatabase } from "firebase-admin/database";
 import crypto from "node:crypto";
 
 // ===== 설정: 여기만 바꾸면 됨 =====
-const SOURCES = [
-  { name: "서울신문",     cat: "뉴스",   url: "https://www.seoul.co.kr/xml/rss/rss_society.xml" },
-  { name: "SBS 지역",    cat: "뉴스",   url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08" },
-  { name: "경향 지역",   cat: "뉴스",   url: "https://www.khan.co.kr/rss/rssdata/local_news.xml" },
-  { name: "오마이뉴스",   cat: "뉴스",   url: "http://rss.ohmynews.com/rss/ohmynews.xml" },
-  { name: "경향 문화",   cat: "문화",   url: "https://www.khan.co.kr/rss/rssdata/culture_news.xml" },
-  { name: "SBS 문화연예", cat: "문화",   url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07" },
-  { name: "서울신문 생활", cat: "생활",   url: "https://www.seoul.co.kr/xml/rss/rss_life.xml" },
-];
+// 기본 출처 목록(시드). Firebase 의 sources 가 비어있을 때 최초 1회 이 값이 저장됨.
+// 이후에는 웹 "출처 관리"에서 켜고/끄고/추가/삭제한 값이 우선.
+const DEFAULT_SOURCES = {
+  s1: { name: "서울신문",     cat: "뉴스", url: "https://www.seoul.co.kr/xml/rss/rss_society.xml", on: true },
+  s2: { name: "SBS 지역",     cat: "뉴스", url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08", on: true },
+  s3: { name: "경향 지역",    cat: "뉴스", url: "https://www.khan.co.kr/rss/rssdata/local_news.xml", on: true },
+  s4: { name: "오마이뉴스",    cat: "뉴스", url: "http://rss.ohmynews.com/rss/ohmynews.xml", on: true },
+  s5: { name: "경향 문화",    cat: "문화", url: "https://www.khan.co.kr/rss/rssdata/culture_news.xml", on: true },
+  s6: { name: "SBS 문화연예",  cat: "문화", url: "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07", on: true },
+  s7: { name: "서울신문 생활",  cat: "생활", url: "https://www.seoul.co.kr/xml/rss/rss_life.xml", on: true },
+};
 // 서울 동네 키워드 (제목/요약에 하나라도 있어야 통과). 전부 받으려면 [] 로.
 const KEYWORDS = ["서울", "강서", "마곡", "축제", "행사", "공지", "모집", "무료", "문화"];
 
@@ -91,21 +93,40 @@ function db() {
   return getDatabase(_app);
 }
 
+// Firebase 에서 출처 목록을 읽어옴. 없으면 기본값으로 시드.
+async function loadSources(database) {
+  const ref = database.ref("sources");
+  const snap = await ref.once("value");
+  let obj = snap.val();
+  if (!obj) {                       // 최초 실행: 기본 목록 저장
+    await ref.set(DEFAULT_SOURCES);
+    obj = DEFAULT_SOURCES;
+  }
+  // on:true 인 것만, URL 있는 것만
+  return Object.values(obj).filter((s) => s && s.on && s.url);
+}
+
 export const handler = async () => {
   try {
-    const results = await Promise.allSettled(SOURCES.map(fetchSource));
+    const database = db();
+    const active = await loadSources(database);
+    if (active.length === 0) {
+      return { statusCode: 200, body: "no active sources (모든 출처가 꺼져 있어요)" };
+    }
+
+    const results = await Promise.allSettled(active.map(fetchSource));
     const fresh = [];
     results.forEach((r, i) => {
       if (r.status === "fulfilled") fresh.push(...r.value);
-      else console.error(`${SOURCES[i].name} 실패:`, r.reason?.message);
+      else console.error(`${active[i].name} 실패:`, r.reason?.message);
     });
 
-    const ref = db().ref("feed");
+    const ref = database.ref("feed");
     const snap = await ref.once("value");
     const { next, added, total } = mergeFeed(snap.val() || {}, fresh);
     await ref.set(next);
 
-    const msg = `crawled ${fresh.length}, added ${added}, total ${total}`;
+    const msg = `sources ${active.length}, crawled ${fresh.length}, added ${added}, total ${total}`;
     console.log(msg);
     return { statusCode: 200, body: msg };
   } catch (e) {
