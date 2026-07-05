@@ -3,6 +3,10 @@
     "feed": {
       ".read": true,
       ".write": false
+    },
+    "sources": {
+      ".read": true,
+      ".write": true
     }
   }
 }
