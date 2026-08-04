@@ -1,435 +1,496 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>우리동네 생활정보방 · 서울</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12181A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>SCARA JOG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --paper:#EEF1EA; --card:#FFFFFF; --ink:#2A2E27; --muted:#7A7E72;
-    --honey:#E9A522; --honey-ink:#7A5205; --forest:#3C6E52; --line:#E0E2D8; --radius:14px;
-  }
-  *{box-sizing:border-box} html,body{margin:0}
-  body{background:var(--paper); color:var(--ink);
-    font-family:"Gothic A1",system-ui,sans-serif; font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased}
-  .wrap{max-width:600px; margin:0 auto; padding:0 16px 64px}
-  .board{position:sticky; top:0; z-index:10; background:var(--paper); padding-top:18px}
-  .board::after{content:""; display:block; height:1px; background:var(--line); margin-top:14px}
-  .title{font-family:"Jua",sans-serif; font-size:30px; line-height:1.1; margin:0; display:flex; align-items:center; gap:8px}
-  .title .dot{width:12px;height:12px;border-radius:50%;background:var(--honey);display:inline-block}
-  .live{font-size:11px; font-weight:700; color:var(--forest); border:1px solid var(--forest); border-radius:999px; padding:1px 8px; margin-left:4px; font-family:"Gothic A1"}
-  .subtitle{margin:4px 0 4px; color:var(--muted); font-size:14px}
-  .synced{margin:0 0 14px; color:var(--forest); font-size:13px; font-weight:500}
-  .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
-  .search{flex:1 1 160px; min-width:140px; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px}
-  .search input{border:0; outline:0; width:100%; font:inherit; background:transparent; color:var(--ink)}
-  .search svg{flex:0 0 auto; color:var(--muted)}
-  button,.toggle{font:inherit; cursor:pointer}
-  .btn{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px; color:var(--ink); font-weight:500; transition:border-color .15s}
-  .btn:hover{border-color:var(--forest)}
-  .btn:focus-visible,.search:focus-within,.toggle:focus-visible{outline:2px solid var(--honey); outline-offset:2px}
-  .toggle{display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); user-select:none}
-  .toggle input{accent-color:var(--forest); width:16px; height:16px}
-  .cats{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px}
-  .cat{font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); border-radius:999px; padding:5px 13px; transition:all .12s}
-  .cat:hover{border-color:var(--forest)}
-  .cat.on{background:var(--forest); border-color:var(--forest); color:#fff; font-weight:700}
-  .admin{margin-top:16px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); overflow:hidden}
-  .admin summary{cursor:pointer; padding:14px 16px; font-family:"Jua",sans-serif; font-size:16px; list-style:none; user-select:none}
-  .admin summary::-webkit-details-marker{display:none}
-  .admin summary::before{content:"⚙️ "}
-  .admin .body{padding:0 16px 16px}
-  .src{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line)}
-  .src input[type=checkbox]{width:18px; height:18px; accent-color:var(--forest); flex:0 0 auto}
-  .src .info{flex:1; min-width:0}
-  .src .nm{font-weight:700; font-size:14px}
-  .src .u{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .src .badge{font-size:11px; color:var(--forest); background:#EAF1EC; padding:2px 7px; border-radius:999px; flex:0 0 auto}
-  .src .del{flex:0 0 auto; border:0; background:none; cursor:pointer; color:#C0503A; font-size:18px; line-height:1; padding:4px}
-  .addform{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; padding-top:14px; border-top:2px solid var(--line)}
-  .addform input, .addform select{font:inherit; font-size:14px; border:1px solid var(--line); border-radius:10px; padding:8px 10px}
-  .addform input.url{flex:1 1 100%}
-  .addform input.nm{flex:1 1 140px}
-  .addform .add{background:var(--forest); color:#fff; border:0; border-radius:10px; padding:8px 16px; font-weight:700; cursor:pointer}
-  .admin .hint{font-size:12px; color:var(--muted); margin:10px 0 0}
-  .feed{margin-top:20px; display:flex; flex-direction:column; gap:14px}
-  .card{position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 16px 14px; transition:transform .12s ease, box-shadow .12s ease}
-  .card:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(42,46,39,.06)}
-  .card-top{display:flex; align-items:center; gap:8px; margin-bottom:8px}
-  .tag{font-size:12px; font-weight:700; color:var(--forest); background:#EAF1EC; padding:3px 9px; border-radius:999px; white-space:nowrap}
-  .date{font-size:12px; color:var(--muted)}
-  .card h2{margin:0 0 6px; font-size:17px; line-height:1.4; font-weight:700}
-  .card h2 a{color:var(--ink); text-decoration:none}
-  .card h2 a:hover{text-decoration:underline; text-decoration-color:var(--honey)}
-  .summary{margin:0; font-size:14px; color:#5C6055; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
-  .pin{position:absolute; top:-8px; right:14px; background:var(--honey); color:var(--honey-ink); font-family:"Jua",sans-serif; font-size:12px; padding:3px 9px; border-radius:6px; transform:rotate(-3deg); box-shadow:0 2px 5px rgba(233,165,34,.35)}
-  .card.seen{opacity:.72} .card.seen .tag{background:#EFF0EC; color:var(--muted)}
-  .pickwrap{position:absolute; top:12px; left:12px; display:none}
-  .pickwrap input{width:20px; height:20px; accent-color:var(--forest); cursor:pointer}
-  body.pickmode .pickwrap{display:block}
-  body.pickmode .card{padding-left:44px}
-  .card-top{padding-left:0}
-  /* 복사 선택 팝오버 */
-  .copywrap{position:relative; display:inline-block}
-  .menu{position:absolute; top:calc(100% + 6px); left:0; z-index:30; background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:0 6px 20px rgba(42,46,39,.12); padding:6px; min-width:150px; display:none}
-  .menu.open{display:block}
-  .menu button{display:block; width:100%; text-align:left; font:inherit; font-size:14px; border:0; background:none; cursor:pointer; padding:9px 12px; border-radius:8px; color:var(--ink)}
-  .menu button:hover{background:#F1F3EC}
-  .btn-danger{color:#C0503A}
-  #delAll{color:#C0503A}
-  .state{text-align:center; padding:48px 16px; color:var(--muted)}
-  .state .big{font-family:"Jua",sans-serif; font-size:20px; color:var(--ink); margin-bottom:6px}
-  .skel{height:96px; border-radius:var(--radius); background:linear-gradient(90deg,#fff,#F4F5F0,#fff); background-size:200% 100%; animation:sh 1.2s infinite}
-  @keyframes sh{to{background-position:-200% 0}}
-  footer{margin-top:22px; text-align:center; color:var(--muted); font-size:12px}
-  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s}
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-  @media (max-width:480px){
-    /* 모바일: 상단을 컴팩트하게 + sticky 해제해서 기사 영역 최대화 */
-    .board{position:static; padding-top:12px}
-    .board::after{margin-top:10px}
-    .title{font-size:23px}
-    .subtitle{font-size:13px; margin:3px 0 2px}
-    .synced{font-size:12px; margin:0 0 10px}
-    .controls{gap:6px}
-    .btn{padding:7px 12px; font-size:14px}
-    .search{flex:1 1 100%; padding:7px 13px}
-    .toggle{flex:0 0 auto}
-    .cats{margin-top:9px; gap:5px}
-    .cat{padding:4px 11px; font-size:12px}
-    .admin{margin-top:12px}
-    .admin summary{padding:12px 14px; font-size:15px}
-    .menu{min-width:140px}
-    .menu button{padding:11px 12px}
-    .feed{gap:12px; margin-top:14px}
-  }
-  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+:root{
+  --void:#12181A; --case:#1C2427; --case-2:#263135; --case-3:#313F44; --edge:#3C4C52;
+  --bone:#E8E3D6; --dim:#96A2A6; --amber:#F2A83B; --cyan:#5FD3D6; --rose:#E2564A;
+  --disp:'Chakra Petch',system-ui,sans-serif;
+  --body:'IBM Plex Sans KR',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  background:var(--void);color:var(--bone);font-family:var(--body);
+  display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
+  gap:8px;padding:calc(var(--sat) + 8px) 10px calc(var(--sab) + 8px);
+  height:100dvh;overflow:hidden;user-select:none;-webkit-user-select:none;
+}
+.lbl{font-family:var(--disp);font-weight:600;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- 상태바 ---------- */
+.status{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow:hidden}
+.brand{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.05em;flex:none}
+.brand span{color:var(--amber)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:2px;
+  background:var(--case-2);border:1px solid var(--edge);flex:none;
+  font-family:var(--disp);font-weight:600;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.lamp{width:6px;height:6px;border-radius:50%;background:var(--dim);flex:none}
+.pill.on{color:var(--cyan);border-color:#2F5A5C}
+.pill.on .lamp{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+.pill.off{color:var(--rose);border-color:#5A2E2A}
+.pill.off .lamp{background:var(--rose);box-shadow:0 0 7px var(--rose)}
+.pill.wait{color:var(--amber);border-color:#5C4520}
+.pill.wait .lamp{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.status .sp{flex:1}
+.seqt{font-family:var(--mono);font-size:9.5px;color:#5D6C71;flex:none}
+
+/* ---------- 경고 ---------- */
+.banner{display:none;gap:8px;align-items:center;padding:8px 10px;font-size:12.5px;
+  background:#2A1A18;border:1px solid #5A2E2A;border-left:3px solid var(--rose);border-radius:3px}
+.banner.show{display:flex}
+.banner b{font-family:var(--disp);color:var(--rose);flex:none}
+
+/* ---------- 텔레메트리 ---------- */
+.tele{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.jt{background:var(--case);border:1px solid var(--edge);border-radius:3px;padding:8px 10px}
+.jt-hd{display:flex;justify-content:space-between;align-items:baseline}
+.jt-v{font-family:var(--mono);font-weight:600;font-size:clamp(24px,7.5vw,32px);line-height:1.05;color:var(--cyan)}
+.jt-v.stale{color:var(--dim)}
+.jt-u{font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:2px}
+.jt-c{font-family:var(--mono);font-size:9.5px;color:#5D6C71;margin-top:2px}
+/* 리밋 바 : 중앙 0 기준, 마커가 현재 각도 */
+.bar{position:relative;height:5px;margin-top:7px;background:var(--case-3);border-radius:3px;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;width:2px;background:var(--bone);opacity:.35;left:50%}
+.bar b{position:absolute;top:-1px;bottom:-1px;width:7px;border-radius:2px;background:var(--amber);
+  left:50%;transform:translateX(-50%);transition:left .22s ease-out,background .15s}
+.bar b.lim{background:var(--rose)}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini{background:var(--case);border:1px solid var(--edge);border-radius:3px;padding:7px 10px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.mini-v{font-family:var(--mono);font-weight:600;font-size:16px;color:var(--cyan)}
+
+/* ---------- 설정 ---------- */
+.cfg{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.seg{display:flex;border:1px solid var(--edge);border-radius:3px;overflow:hidden}
+.seg button{flex:1;padding:10px 0;background:var(--case-2);border:none;border-right:1px solid var(--edge);
+  color:var(--dim);font-family:var(--mono);font-weight:500;font-size:13px;touch-action:manipulation}
+.seg button:last-child{border-right:none}
+.seg button[aria-pressed="true"]{background:var(--amber);color:#1A1206;font-weight:600}
+.rpmbox{background:var(--case-2);border:1px solid var(--edge);border-radius:3px;padding:5px 9px;text-align:center}
+.rpmbox input{width:70px;display:block;accent-color:var(--amber);margin-top:1px}
+
+/* ---------- 컨트롤 데크 ---------- */
+.deck{
+  display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;
+  gap:10px;align-content:center;justify-content:center;align-items:center;
+  background:var(--case);border:1px solid var(--edge);border-radius:4px;
+  padding:12px 10px;min-height:0;touch-action:none;
+}
+.deck .sh{grid-row:1;display:flex;justify-content:center}
+.deck .sh.l{grid-column:1}
+.deck .sh.r{grid-column:3}
+.deck .dpad{grid-column:1;grid-row:2}
+.deck .faces{grid-column:3;grid-row:2}
+.deck .center{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;min-width:0}
+
+/* 공통 키 */
+.k{
+  background:linear-gradient(#2E3A3F,#242E32);border:1px solid #4E6268;border-bottom:3px solid #161D20;
+  color:var(--bone);border-radius:6px;display:grid;place-items:center;line-height:1.1;text-align:center;
+  font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.05em;
+  touch-action:none;transition:background .05s,border-color .05s,transform .05s;
+}
+.k:active,.k.lit{background:var(--amber);color:#1A1206;border-color:#FFD489;
+  border-bottom-width:1px;transform:translateY(2px)}
+.k[aria-disabled="true"]{opacity:.32;background:linear-gradient(#232B2E,#1E2528)}
+.k:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* D패드 3x3 */
+.dpad{display:grid;grid-template-columns:repeat(3,var(--kd));grid-template-rows:repeat(3,var(--kd));gap:4px;
+  --kd:clamp(52px,17vw,68px)}
+.dpad .k{font-size:10.5px}
+.dpad .up{grid-area:1/2}.dpad .lf{grid-area:2/1}.dpad .rt{grid-area:2/3}.dpad .dn{grid-area:3/2}
+.dpad .hub{grid-area:2/2;background:var(--case-2);border:1px solid var(--case-3);border-radius:5px;
+  display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:13px;color:var(--amber)}
+.dpad .hub small{display:block;font-size:8px;color:#5D6C71;letter-spacing:.08em}
+
+/* 페이스 2x2 */
+.faces{display:grid;grid-template-columns:repeat(2,var(--kf));grid-template-rows:repeat(2,var(--kf));gap:9px;
+  --kf:clamp(50px,15.5vw,62px)}
+.faces .k{border-radius:50%;font-size:9.5px}
+
+/* 숄더 */
+.sh .k{width:clamp(78px,25vw,104px);height:36px;border-radius:5px;font-size:10.5px}
+
+/* 중앙 : 스텝 안내 */
+.center .lbl{text-align:center}
+.hint{font-family:var(--mono);font-size:9.5px;color:#5D6C71;text-align:center;line-height:1.5}
+
+/* 로그 (중앙, 최근 3줄) */
+.mlog{width:100%;font-family:var(--mono);font-size:9.5px;line-height:1.6;color:var(--dim);
+  max-height:74px;overflow:hidden;text-align:center}
+.mlog div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mlog .ok{color:var(--cyan)}.mlog .warn{color:var(--amber)}.mlog .err{color:var(--rose)}
+
+/* ---------- E-STOP ---------- */
+.stop{
+  width:100%;padding:15px;background:#3A1512;border:1px solid var(--rose);
+  border-bottom:4px solid #8F2A20;border-radius:4px;color:#FFD9D4;
+  font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.2em;
+  touch-action:manipulation;
+}
+.stop:active{background:#4E1B17;transform:translateY(2px);border-bottom-width:2px}
+
+/* ---------- 가로 모드 ---------- */
+@media(orientation:landscape) and (max-height:560px){
+  body{grid-template-rows:auto auto minmax(0,1fr) auto;padding-top:calc(var(--sat) + 6px)}
+  .tele{grid-template-columns:repeat(2,1fr)}
+  .jt-v{font-size:clamp(20px,4.5vh,26px)}
+  .cfg{display:none}
+  .deck{padding:8px}
+  .dpad{--kd:clamp(44px,11vh,58px)}
+  .faces{--kf:clamp(42px,10.5vh,54px)}
+  .mlog{max-height:46px}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="board">
-    <h1 class="title"><span class="dot"></span>우리동네 생활정보방<span class="live">LIVE</span></h1>
-    <p class="subtitle">서울 지역 소식을 실시간으로 모아드려요</p>
-    <p class="synced" id="lastSync">마지막 동기화: 불러오는 중…</p>
-    <div class="controls">
-      <label class="search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-        <input id="q" type="search" placeholder="검색 (예: 축제, 모집)" aria-label="소식 검색">
-      </label>
-      <label class="toggle"><input type="checkbox" id="onlyNew"> 새 글만</label>
-      <button class="btn" id="sync">🔄 지금 동기화</button>
-      <span class="copywrap">
-        <button class="btn" id="copy">카톡용 복사</button>
-        <div class="menu" id="copyMenu">
-          <button id="copyAll">전체 복사</button>
-          <button id="copyPick">개별 선택</button>
-        </div>
-      </span>
-      <span class="copywrap">
-        <button class="btn btn-danger" id="del">기사 삭제</button>
-        <div class="menu" id="delMenu">
-          <button id="delAll">전체 삭제</button>
-          <button id="delPick">개별 선택</button>
-        </div>
-      </span>
-      <button class="btn" id="markAll">모두 읽음</button>
-    </div>
-    <div class="cats" id="cats"></div>
-  </header>
-  <details class="admin">
-    <summary>출처 관리 (RSS 켜기/끄기 · 추가/삭제)</summary>
-    <div class="body">
-      <div id="srcList"></div>
-      <div class="addform">
-        <input class="url" id="newUrl" type="url" placeholder="RSS 주소 (https://...xml)">
-        <input class="nm" id="newName" type="text" placeholder="이름 (예: 서울신문)">
-        <select id="newCat">
-          <option value="뉴스">뉴스</option>
-          <option value="문화">문화</option>
-          <option value="생활">생활</option>
-          <option value="공지">공지</option>
-          <option value="기타">기타</option>
-        </select>
-        <button class="add" id="addSrc">추가</button>
-      </div>
-      <p class="hint">체크를 켜고/끄면 다음 크롤링부터 반영돼요. 변경 후 새 소식은 최대 30분 뒤(또는 수동 실행 시 바로) 들어옵니다.</p>
-    </div>
-  </details>
-  <main class="feed" id="feed" aria-live="polite">
-    <div class="skel"></div><div class="skel"></div><div class="skel"></div>
-  </main>
-  <footer id="meta"></footer>
+
+<!-- ================= 상태 ================= -->
+<div class="status">
+  <div class="brand">SCARA <span>JOG</span></div>
+  <div class="pill off" id="pLink"><i class="lamp"></i><span id="pLinkT">대기</span></div>
+  <div class="pill" id="pBusy"><i class="lamp"></i><span id="pBusyT">준비</span></div>
+  <div class="sp"></div>
+  <div class="seqt" id="pSeq">0/0</div>
 </div>
-<div class="toast" id="toast"></div>
+
+<div class="banner" id="banner"><b>주의</b><span id="bannerT"></span></div>
+
+<!-- ================= 텔레메트리 ================= -->
+<div class="tele">
+  <div class="jt">
+    <div class="jt-hd"><span class="lbl">J1 어깨</span><span class="lbl" id="j1lim"></span></div>
+    <div><span class="jt-v stale" id="j1v">—</span><span class="jt-u">deg</span></div>
+    <div class="jt-c" id="j1c">— counts</div>
+    <div class="bar"><i></i><b id="j1bar"></b></div>
+  </div>
+  <div class="jt">
+    <div class="jt-hd"><span class="lbl">J2 팔꿈치</span><span class="lbl" id="j2lim"></span></div>
+    <div><span class="jt-v stale" id="j2v">—</span><span class="jt-u">deg</span></div>
+    <div class="jt-c" id="j2c">— counts</div>
+    <div class="bar"><i></i><b id="j2bar"></b></div>
+  </div>
+</div>
+
+<div class="row2">
+  <div class="mini"><span class="lbl">Z축</span><span class="mini-v" id="zv">—</span></div>
+  <div class="mini"><span class="lbl">그리퍼</span><span class="mini-v" id="gv">—</span></div>
+</div>
+
+<!-- ================= 설정 ================= -->
+<div class="cfg">
+  <div class="seg" id="segStep" role="group" aria-label="스텝 크기">
+    <button data-step="1" aria-pressed="false">1°</button>
+    <button data-step="5" aria-pressed="true">5°</button>
+    <button data-step="15" aria-pressed="false">15°</button>
+  </div>
+  <div class="rpmbox">
+    <span class="lbl"><span class="num" id="rpmv" style="color:var(--amber)">20</span> RPM</span>
+    <input type="range" id="rpm" min="5" max="60" step="5" value="20" aria-label="조그 속도">
+  </div>
+</div>
+
+<!-- ================= 컨트롤 데크 ================= -->
+<div class="deck">
+  <div class="sh l"><button class="k" data-act="Z+">Z ▲</button></div>
+  <div class="sh r"><button class="k" data-act="HOME">HOME</button></div>
+
+  <div class="dpad">
+    <button class="k up" data-act="J2+" data-hold="1">J2 ▲</button>
+    <button class="k lf" data-act="J1+" data-hold="1">◀ J1</button>
+    <div class="hub" id="hub">5°<small>STEP</small></div>
+    <button class="k rt" data-act="J1-" data-hold="1">J1 ▶</button>
+    <button class="k dn" data-act="J2-" data-hold="1">J2 ▼</button>
+  </div>
+
+  <div class="center">
+    <div class="lbl">동작 기록</div>
+    <div class="mlog" id="mlog"></div>
+    <div class="hint" id="hint">꾹 누르면 연속 이동</div>
+    <button class="k" data-act="Z-" style="width:100%;height:34px;font-size:10.5px">Z ▼</button>
+  </div>
+
+  <div class="faces">
+    <button class="k" data-act="ZERO">ZERO</button>
+    <button class="k" data-act="ZHOME">Z ⌂</button>
+    <button class="k" data-act="GRIP">GRIP</button>
+    <button class="k" data-act="STEP">STEP</button>
+  </div>
+</div>
+
+<button class="stop" id="estop">비상 정지</button>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-// ⬇⬇⬇ Firebase 콘솔 > 프로젝트 설정 > 내 앱(웹) 에서 복사해 붙여넣기 ⬇⬇⬇
-const firebaseConfig = {
-  apiKey: "AIzaSyD_RY8IWhScD3GdJdbh9sRMnrOj2h9GdAA",
-  authDomain: "crawling-infor.firebaseapp.com",
-  databaseURL: "https://crawling-infor-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "crawling-infor",
-  storageBucket: "crawling-infor.firebasestorage.app",
-  messagingSenderId: "1086896728355",
-  appId: "1:1086896728355:web:efb09d6e837c6328d2c496",
-  measurementId: "G-7R8WFJEYD1"
+/* =====================================================================
+   1) FIREBASE — 여기만 채우세요. 비우면 시뮬레이터 모드로 동작합니다.
+   ===================================================================== */
+const FB_CONFIG = {
+  // apiKey:      "...",
+  // authDomain:  "your-project.firebaseapp.com",
+  // databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+  // projectId:   "your-project",
 };
-// ⬆⬆⬆ 여기까지 ⬆⬆⬆
+const ROBOT_ID = "scara01";
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+/* 2) 소프트 리밋 — ESP32 쪽과 반드시 같은 값으로 */
+const LIMIT = { j1:[-120,120], j2:[-140,140], z:[0,400] };
 
-const SEEN_KEY = "dongnae_seen_v1";
-const seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"));
-const saveSeen = () => localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-3000)));
-let ALL = [];
-let curCat = "전체";   // 선택된 분류
-const picked = new Set();   // 카톡 복사용 체크된 링크들
-const $ = (id) => document.getElementById(id);
+/* 3) 연속 이동 설정 */
+const HOLD_DELAY  = 400;   // 이 시간 이상 누르면 반복 시작 [ms]
+const HOLD_TICK   = 100;   // 반복 가능 여부 확인 주기 [ms]
 
-function relTime(s){
-  const t=Date.parse(s); if(!t) return s?s.slice(0,16):"";
-  const m=Math.floor((Date.now()-t)/60000);
-  if(m<1)return"방금"; if(m<60)return m+"분 전";
-  const h=Math.floor(m/60); if(h<24)return h+"시간 전";
-  const d=Math.floor(h/24); if(d<7)return d+"일 전";
-  return new Date(t).toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"});
+const CNT_PER_DEG = 25000/90;
+
+/* ===================== 상태 ===================== */
+const S = { step:5, rpm:20, zstep:5, seq:0, ack:0, busy:false,
+            j1:null,j2:null,j1c:null,j2c:null,z:null,grip:null,
+            hb:0, online:false, sim:false, refCmd:null, setFn:null };
+
+const $ = id => document.getElementById(id);
+const el = {};
+['pLink','pLinkT','pBusy','pBusyT','pSeq','banner','bannerT','j1v','j1c','j1bar','j1lim',
+ 'j2v','j2c','j2bar','j2lim','zv','gv','mlog','hub','rpmv','hint'].forEach(k=>el[k]=$(k));
+el.j1lim.textContent = `${LIMIT.j1[0]}~${LIMIT.j1[1]}°`;
+el.j2lim.textContent = `${LIMIT.j2[0]}~${LIMIT.j2[1]}°`;
+
+/* ===================== 진동 ===================== */
+const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} };
+
+/* ===================== 로그 (최근 4줄) ===================== */
+function log(msg, kind=''){
+  const d = document.createElement('div');
+  d.className = kind; d.textContent = msg;
+  el.mlog.prepend(d);
+  while(el.mlog.children.length > 4) el.mlog.lastChild.remove();
 }
-const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function visibleItems(){
-  const q=$("q").value.trim(), onlyNew=$("onlyNew").checked;
-  return ALL.filter(it=>{
-    if(curCat!=="전체" && (it.cat||"기타")!==curCat) return false;
-    if(onlyNew && seen.has(it.link)) return false;
-    if(q && !(it.title+it.summary+it.source).includes(q)) return false;
-    return true;
+/* ===================== 화면 ===================== */
+function waiting(){ return S.busy || S.ack < S.seq; }
+function canSend(){ return (S.sim || S.online) && !waiting(); }
+
+function render(){
+  const fresh = S.sim || (Date.now() - S.hb < 4000);
+  S.online = fresh;
+
+  el.pLink.className = 'pill ' + (S.sim ? 'wait' : fresh ? 'on' : 'off');
+  el.pLinkT.textContent = S.sim ? '시뮬' : fresh ? '연결' : '응답없음';
+
+  const w = waiting();
+  el.pBusy.className = 'pill ' + (w ? 'wait' : 'on');
+  el.pBusyT.textContent = w ? '동작중' : '준비';
+  el.pSeq.textContent = `${S.ack}/${S.seq}`;
+
+  if(!fresh && !S.sim){
+    el.banner.classList.add('show');
+    el.bannerT.textContent = '컨트롤러 응답 없음. 명령이 로봇에 도달하지 않습니다.';
+  } else el.banner.classList.remove('show');
+
+  const put=(k,lim)=>{
+    const v=S[k], vE=el[k+'v'], cE=el[k+'c'], bE=el[k+'bar'];
+    if(v===null||v===undefined){ vE.textContent='—'; vE.classList.add('stale'); cE.textContent='— counts'; return; }
+    vE.textContent=v.toFixed(1); vE.classList.remove('stale');
+    cE.textContent=`${S[k+'c'] ?? '—'} counts`;
+    const f=Math.min(1,Math.max(0,(v-lim[0])/(lim[1]-lim[0])));
+    bE.style.left=(f*100).toFixed(1)+'%';
+    bE.classList.toggle('lim', v<=lim[0]+.5 || v>=lim[1]-.5);
+  };
+  put('j1',LIMIT.j1); put('j2',LIMIT.j2);
+
+  el.zv.textContent = S.z===null?'—':S.z+' mm';
+  el.gv.textContent = S.grip===null?'—':(S.grip==='open'?'열림':'닫힘');
+  el.gv.style.color = S.grip==='closed' ? 'var(--amber)' : 'var(--cyan)';
+  el.hub.innerHTML = S.step+'°<small>STEP</small>';
+
+  const lock = !canSend();
+  document.querySelectorAll('.k[data-act]').forEach(b=>{
+    if(b.dataset.act==='STEP') return;
+    b.setAttribute('aria-disabled', lock?'true':'false');
   });
 }
-// 칩 UI 그리기: 전체 + 데이터에 존재하는 분류들, 각 개수 표시
-function renderCats(){
-  const counts={};
-  ALL.forEach(it=>{const c=it.cat||"기타"; counts[c]=(counts[c]||0)+1;});
-  const cats=["전체", ...Object.keys(counts).sort()];
-  $("cats").innerHTML=cats.map(c=>{
-    const n = c==="전체" ? ALL.length : counts[c];
-    return `<button class="cat ${c===curCat?"on":""}" data-cat="${esc(c)}">${esc(c)} ${n}</button>`;
-  }).join("");
-}
-function render(){
-  const items=visibleItems(), feed=$("feed");
-  if(!items.length){
-    feed.innerHTML=`<div class="state"><div class="big">텅 비었네요</div>${$("onlyNew").checked?"새로 올라온 소식이 없어요. ‘새 글만’을 꺼보세요.":"아직 수집된 소식이 없어요."}</div>`;
-    return;
+
+/* ===================== 전송 ===================== */
+async function send(cmd, force=false){
+  if(!force && !canSend()){
+    log(waiting() ? '이전 동작 진행 중' : '컨트롤러 응답 없음', 'warn');
+    buzz([10,50,10]); return;
   }
-  feed.innerHTML=items.map(it=>{
-    const isNew=!seen.has(it.link);
-    return `<article class="card ${isNew?"":"seen"}">${isNew?'<span class="pin">NEW</span>':""}
-      <label class="pickwrap"><input type="checkbox" class="pick" data-link="${esc(it.link)}" ${picked.has(it.link)?"checked":""}></label>
-      <div class="card-top"><span class="tag">${esc(it.source)}</span>${it.cat?`<span class="date">· ${esc(it.cat)}</span>`:""}<span class="date">${esc(relTime(it.date))}</span></div>
-      <h2><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h2>
-      ${it.summary?`<p class="summary">${esc(it.summary)}</p>`:""}</article>`;
-  }).join("");
-  if(typeof updateCopyLabel==="function") updateCopyLabel();
+  S.seq++;
+  const p = { seq:S.seq, rpm:S.rpm, ts:Date.now(), ...cmd };
+  if(S.sim) simExec(p);
+  else{
+    try{ await S.setFn(S.refCmd, p); }
+    catch(e){ S.seq--; log('전송 실패 '+e.message,'err'); buzz([10,50,10]); render(); return; }
+  }
+  log(desc(p),'ok'); render();
+}
+function desc(p){
+  const s=v=>(v>0?'+':'')+v;
+  switch(p.action){
+    case 'jog':  return `J${p.axis} ${s(p.delta)}°  seq${p.seq}`;
+    case 'zjog': return `Z ${s(p.delta)}mm  seq${p.seq}`;
+    case 'grip': return `그리퍼 ${p.value==='open'?'열기':'닫기'}  seq${p.seq}`;
+    case 'home': return `팔 원점  seq${p.seq}`;
+    case 'zhome':return `Z 원점  seq${p.seq}`;
+    case 'zero': return `0° 복귀  seq${p.seq}`;
+    case 'estop':return `비상 정지  seq${p.seq}`;
+  }
+  return p.action;
 }
 
-// Firebase 실시간 구독 — 함수가 새 글을 넣으면 이 화면이 자동으로 갱신됨
-onValue(ref(database,"feed"), (snap)=>{
-  const val=snap.val()||{};
-  ALL=Object.entries(val).map(([k,v])=>({...v,_key:k})).sort((a,b)=>(Date.parse(b.date)||b.addedAt||0)-(Date.parse(a.date)||a.addedAt||0));
-  const nc=ALL.filter(it=>!seen.has(it.link)).length;
-  $("meta").textContent=`총 ${ALL.length}개 · 새 글 ${nc}개 · 실시간 동기화 중`;
-  renderCats();
+/* ===================== 동작 ===================== */
+function clampJog(axis, d){
+  const k='j'+axis, lim=LIMIT[k], cur=S[k]??0;
+  const next=Math.min(lim[1],Math.max(lim[0],cur+d));
+  const dd=+(next-cur).toFixed(2);
+  if(Math.abs(dd)<0.05){ log(`J${axis} 리밋 도달`,'warn'); buzz([10,50,10]); return null; }
+  return dd;
+}
+const ACT = {
+  'J1+':()=>{const d=clampJog(1,+S.step); if(d) send({action:'jog',axis:1,delta:d});},
+  'J1-':()=>{const d=clampJog(1,-S.step); if(d) send({action:'jog',axis:1,delta:d});},
+  'J2+':()=>{const d=clampJog(2,+S.step); if(d) send({action:'jog',axis:2,delta:d});},
+  'J2-':()=>{const d=clampJog(2,-S.step); if(d) send({action:'jog',axis:2,delta:d});},
+  'Z+' :()=>send({action:'zjog',delta:+S.zstep}),
+  'Z-' :()=>send({action:'zjog',delta:-S.zstep}),
+  'GRIP':()=>send({action:'grip',value:S.grip==='open'?'closed':'open'}),
+  'HOME':()=>send({action:'home'}),
+  'ZHOME':()=>send({action:'zhome'}),
+  'ZERO':()=>send({action:'zero'}),
+  'ESTOP':()=>send({action:'estop'},true),
+  'STEP':()=>{const o=[1,5,15]; setStep(o[(o.indexOf(S.step)+1)%3]);},
+};
+
+/* ===================== 터치 : 탭 + 꾹 누르기 ===================== */
+let held=null, holdTimer=null, holdIv=null;
+
+function stopHold(){
+  held=null;
+  clearTimeout(holdTimer); clearInterval(holdIv);
+  holdTimer=holdIv=null;
+  el.hint.textContent='꾹 누르면 연속 이동';
+  document.querySelectorAll('.k.lit').forEach(b=>b.classList.remove('lit'));
+}
+
+function startHold(act, btn){
+  holdTimer = setTimeout(()=>{
+    held = act;
+    btn.classList.add('lit');
+    el.hint.textContent='연속 이동 중 — 떼면 정지';
+    // ack 가 돌아와 canSend() 가 참이 될 때만 다음 스텝을 낸다 → 자동 스로틀
+    holdIv = setInterval(()=>{ if(held && canSend()){ buzz(8); ACT[held](); } }, HOLD_TICK);
+  }, HOLD_DELAY);
+}
+
+document.querySelectorAll('.k[data-act]').forEach(btn=>{
+  const act = btn.dataset.act;
+  btn.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(btn.getAttribute('aria-disabled')==='true' && act!=='STEP'){ buzz([10,50,10]); return; }
+    try{ btn.setPointerCapture(e.pointerId); }catch(_){}
+    buzz(12);
+    ACT[act]();
+    if(btn.dataset.hold) startHold(act, btn);
+  });
+  ['pointerup','pointercancel','pointerleave','lostpointercapture'].forEach(ev=>
+    btn.addEventListener(ev, stopHold));
+});
+addEventListener('blur', stopHold);
+addEventListener('visibilitychange', ()=>{ if(document.hidden) stopHold(); });
+
+$('estop').addEventListener('pointerdown', e=>{
+  e.preventDefault(); stopHold(); buzz([25,40,25]); ACT.ESTOP();
+});
+
+/* 데스크톱 확인용 키보드 */
+const KEYS={a:'J1+',d:'J1-',w:'J2+',s:'J2-',r:'Z+',f:'Z-',g:'GRIP',h:'HOME',z:'ZHOME',o:'ZERO'};
+addEventListener('keydown',e=>{
+  if(e.target.matches('input')) return;
+  if(e.key==='Escape'){ ACT.ESTOP(); return; }
+  if(['1','2','3'].includes(e.key)){ setStep([1,5,15][+e.key-1]); return; }
+  const a=KEYS[e.key.toLowerCase()];
+  if(a && !e.repeat){ e.preventDefault(); ACT[a](); }
+});
+
+/* ===================== 설정 ===================== */
+function setStep(v){
+  S.step=v;
+  document.querySelectorAll('#segStep button').forEach(b=>
+    b.setAttribute('aria-pressed', String(+b.dataset.step===v)));
   render();
-}, (err)=>{
-  $("feed").innerHTML=`<div class="state"><div class="big">연결에 실패했어요</div>Firebase 설정(firebaseConfig)과 DB 규칙을 확인해주세요.<br><small>(${esc(err.message)})</small></div>`;
-});
+}
+document.querySelectorAll('#segStep button').forEach(b=>
+  b.addEventListener('click',()=>{ buzz(8); setStep(+b.dataset.step); }));
+$('rpm').addEventListener('input',e=>{ S.rpm=+e.target.value; el.rpmv.textContent=S.rpm; });
 
-// 마지막 동기화 시각 구독
-function syncText(ts){
-  if(!ts) return "마지막 동기화: 아직 없음";
-  const m=Math.floor((Date.now()-ts)/60000);
-  let rel;
-  if(m<1) rel="방금 전"; else if(m<60) rel=m+"분 전";
-  else{const hh=Math.floor(m/60); rel = hh<24 ? hh+"시간 전" : new Date(ts).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});}
-  return "🕒 마지막 동기화: "+rel;
-}
-let lastSyncTs=0;
-onValue(ref(database,"meta/lastSync"), (snap)=>{
-  lastSyncTs=snap.val()||0;
-  $("lastSync").textContent=syncText(lastSyncTs);
-});
-// 1분마다 "N분 전" 표기 갱신
-setInterval(()=>{ if(lastSyncTs) $("lastSync").textContent=syncText(lastSyncTs); }, 60000);
+/* 화면 꺼짐 방지 */
+(async()=>{ try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(_){} })();
 
-function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1800);}
-function doCopy(chosen){
-  if(!chosen.length){toast("복사할 소식이 없어요");return;}
-  const today=new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
-  const text=`📢 우리동네 새 소식 (${today})\n\n`+chosen.map((it,i)=>`${i+1}. [${it.source}] ${it.title}\n${it.link}`).join("\n\n");
-  navigator.clipboard.writeText(text).then(
-    ()=>toast(`${chosen.length}개 복사 완료! 카톡방에 붙여넣으세요`),
-    ()=>toast("복사 실패"));
-}
-$("cats").addEventListener("click",(e)=>{
-  const b=e.target.closest(".cat"); if(!b) return;
-  curCat=b.dataset.cat; renderCats(); render();
-});
-$("q").addEventListener("input",render);
-$("onlyNew").addEventListener("change",render);
-// ===== 복사/삭제 공용: 전체 / 개별 선택 =====
-// pickMode: null | "copy" | "delete"  — 개별 선택 모드에서 어떤 작업인지
-let pickMode = null;
-function updateModeLabels(){
-  $("copy").textContent = pickMode==="copy"   ? `선택 복사 (${picked.size})` : "카톡용 복사";
-  $("del").textContent  = pickMode==="delete" ? `선택 삭제 (${picked.size})` : "기사 삭제";
-}
-function enterPickMode(mode){
-  pickMode = mode;
-  document.body.classList.add("pickmode");
-  $("copyMenu").classList.remove("open");
-  $("delMenu").classList.remove("open");
-  picked.clear();
-  document.querySelectorAll(".pick").forEach(cb=>cb.checked=false);
-  updateModeLabels();
-  toast(mode==="copy" ? "복사할 소식을 체크하고 ‘선택 복사’를 누르세요" : "삭제할 소식을 체크하고 ‘선택 삭제’를 누르세요");
-}
-function exitPickMode(){
-  pickMode = null;
-  document.body.classList.remove("pickmode");
-  picked.clear();
-  document.querySelectorAll(".pick").forEach(cb=>cb.checked=false);
-  updateModeLabels();
-}
-// 호환용 별칭 (render 에서 호출)
-function updateCopyLabel(){ updateModeLabels(); }
-
-// 카드 체크박스 → picked 갱신
-$("feed").addEventListener("change",(e)=>{
-  const cb=e.target.closest(".pick"); if(!cb) return;
-  if(cb.checked) picked.add(cb.dataset.link); else picked.delete(cb.dataset.link);
-  updateModeLabels();
-});
-
-// 여러 기사 한 번에 삭제 (link 기준으로 _key 찾아서 remove)
-function deleteItems(chosen){
-  if(!chosen.length){ toast("삭제할 소식이 없어요"); return; }
-  if(!confirm(`${chosen.length}개 기사를 삭제할까요?`)) return;
-  const updates={};
-  chosen.forEach(it=>{ if(it._key) updates["feed/"+it._key]=null; });
-  update(ref(database), updates)
-    .then(()=>toast(`${chosen.length}개 삭제했어요`))
-    .catch(err=>toast("삭제 실패: "+err.message));
-}
-
-// ----- 카톡용 복사 버튼 -----
-$("copy").addEventListener("click",(e)=>{
-  e.stopPropagation();
-  if(pickMode==="copy"){
-    const chosen=visibleItems().filter(it=>picked.has(it.link));
-    if(!chosen.length){ toast("선택된 소식이 없어요"); return; }
-    doCopy(chosen); exitPickMode();
-  }else{
-    $("delMenu").classList.remove("open");
-    $("copyMenu").classList.toggle("open");
+/* ===================== Firebase ===================== */
+async function boot(){
+  if(!(FB_CONFIG.databaseURL && FB_CONFIG.apiKey)){
+    S.sim=true;
+    Object.assign(S,{j1:0,j2:0,j1c:0,j2c:0,z:0,grip:'open',ack:0});
+    log('시뮬레이터 모드','warn'); render(); return;
   }
-});
-$("copyAll").addEventListener("click",(e)=>{ e.stopPropagation(); $("copyMenu").classList.remove("open"); doCopy(visibleItems()); });
-$("copyPick").addEventListener("click",(e)=>{ e.stopPropagation(); enterPickMode("copy"); });
-
-// ----- 기사 삭제 버튼 -----
-$("del").addEventListener("click",(e)=>{
-  e.stopPropagation();
-  if(pickMode==="delete"){
-    const chosen=visibleItems().filter(it=>picked.has(it.link));
-    if(!chosen.length){ toast("선택된 기사가 없어요"); return; }
-    deleteItems(chosen); exitPickMode();
-  }else{
-    $("copyMenu").classList.remove("open");
-    $("delMenu").classList.toggle("open");
-  }
-});
-$("delAll").addEventListener("click",(e)=>{ e.stopPropagation(); $("delMenu").classList.remove("open"); deleteItems(visibleItems()); });
-$("delPick").addEventListener("click",(e)=>{ e.stopPropagation(); enterPickMode("delete"); });
-
-// 바깥 클릭 시 메뉴 닫기
-document.addEventListener("click",(e)=>{
-  if(!e.target.closest(".copywrap")){ $("copyMenu").classList.remove("open"); $("delMenu").classList.remove("open"); }
-});
-$("markAll").addEventListener("click",()=>{ALL.forEach(it=>seen.add(it.link));saveSeen();render();
-  $("meta").textContent=$("meta").textContent.replace(/새 글 \d+개/,"새 글 0개");toast("모두 읽음 처리했어요");});
-
-// ===== 출처 관리 (Firebase sources 실시간) =====
-const sourcesRef = ref(database, "sources");
-let SRC = {};   // {id: {name,url,cat,on}}
-onValue(sourcesRef, (snap)=>{
-  SRC = snap.val() || {};
-  renderSrc();
-});
-function renderSrc(){
-  const el=$("srcList");
-  const ids=Object.keys(SRC);
-  if(!ids.length){ el.innerHTML=`<p class="hint" style="margin-top:12px">아직 등록된 출처가 없어요. 아래에서 추가하거나, 크롤러가 한 번 돌면 기본 목록이 채워져요.</p>`; return; }
-  el.innerHTML=ids.map(id=>{
-    const s=SRC[id]||{};
-    return `<div class="src">
-      <input type="checkbox" data-id="${id}" ${s.on?"checked":""}>
-      <div class="info"><div class="nm">${esc(s.name||"(이름없음)")} <span class="badge">${esc(s.cat||"기타")}</span></div>
-      <div class="u">${esc(s.url||"")}</div></div>
-      <button class="del" data-del="${id}" title="삭제">✕</button>
-    </div>`;
-  }).join("");
-}
-// 토글
-$("srcList").addEventListener("change",(e)=>{
-  const cb=e.target.closest("input[type=checkbox]"); if(!cb) return;
-  update(ref(database,"sources/"+cb.dataset.id), { on: cb.checked })
-    .then(()=>toast(cb.checked?"켰어요":"껐어요"))
-    .catch(err=>toast("실패: "+err.message));
-});
-// 삭제
-$("srcList").addEventListener("click",(e)=>{
-  const b=e.target.closest("[data-del]"); if(!b) return;
-  const s=SRC[b.dataset.del]||{};
-  if(!confirm(`'${s.name||"이 출처"}'를 삭제할까요?`)) return;
-  remove(ref(database,"sources/"+b.dataset.del))
-    .then(()=>toast("삭제했어요"))
-    .catch(err=>toast("실패: "+err.message));
-});
-// 추가
-// ===== 지금 동기화 버튼 =====
-$("sync").addEventListener("click", async ()=>{
-  const btn=$("sync"); const orig=btn.textContent;
-  btn.disabled=true; btn.textContent="동기화 중…";
   try{
-    const res=await fetch("/.netlify/functions/run");
-    const data=await res.json();
-    if(data.ok){
-      toast(data.added>0?`새 소식 ${data.added}개 추가! (총 ${data.total})`:`새 소식은 없어요 (총 ${data.total||0})`);
-    }else{
-      toast("동기화 실패: "+(data.error||"알 수 없는 오류"));
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, onValue, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const db = getDatabase(initializeApp(FB_CONFIG));
+    S.refCmd = ref(db, `robots/${ROBOT_ID}/cmd`);
+    S.setFn  = set;
+    onValue(ref(db, `robots/${ROBOT_ID}/state`), snap=>{
+      const v=snap.val(); if(!v) return;
+      S.ack=v.ack??S.ack; S.busy=!!v.busy;
+      S.j1=v.j1_deg??null; S.j1c=v.j1_cnt; S.j2=v.j2_deg??null; S.j2c=v.j2_cnt;
+      S.z=v.z_mm??null; S.grip=v.grip??null;
+      S.hb=v.hb?Number(v.hb):Date.now();
+      if(v.fault) log('오류 '+v.fault,'err');
+      render();
+    }, err=>log('구독 실패 '+err.message,'err'));
+    log('Firebase 연결','ok');
+  }catch(e){ log('초기화 실패 '+e.message,'err'); }
+  render();
+}
+
+/* ===================== 시뮬레이터 ===================== */
+function simExec(p){
+  S.busy=true; render();
+  const dur = p.action==='home'?2200 : p.action==='zhome'?2600 : 550;
+  setTimeout(()=>{
+    if(p.action==='jog'){
+      const k='j'+p.axis;
+      S[k]=+((S[k]||0)+p.delta).toFixed(1);
+      S[k+'c']=Math.round(S[k]*CNT_PER_DEG*-1);
     }
-  }catch(err){
-    toast("동기화 실패: "+err.message);
-  }finally{
-    btn.disabled=false; btn.textContent=orig;
-  }
-});
-$("addSrc").addEventListener("click",()=>{
-  const url=$("newUrl").value.trim(), name=$("newName").value.trim(), cat=$("newCat").value;
-  if(!/^https?:\/\//.test(url)){ toast("올바른 RSS 주소(https://)를 입력하세요"); return; }
-  if(!name){ toast("이름을 입력하세요"); return; }
-  push(sourcesRef, { name, url, cat, on: true })
-    .then(()=>{ $("newUrl").value=""; $("newName").value=""; toast("추가했어요! 다음 크롤링부터 반영돼요"); })
-    .catch(err=>toast("실패: "+err.message));
-});
+    if(p.action==='zjog') S.z=Math.min(LIMIT.z[1],Math.max(LIMIT.z[0],(S.z||0)+p.delta));
+    if(p.action==='grip') S.grip=p.value;
+    if(p.action==='home'||p.action==='zero') Object.assign(S,{j1:0,j2:0,j1c:0,j2c:0});
+    if(p.action==='zhome') S.z=0;
+    S.busy=false; S.ack=p.seq; render();
+  }, dur);
+}
+
+setInterval(render, 1000);
+boot();
 </script>
 </body>
 </html>
