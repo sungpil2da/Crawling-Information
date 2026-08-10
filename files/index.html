@@ -1,765 +1,2987 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기획 워크플로 · 목표에서 개선까지</title>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- saved from url=(0042)file:///Users/choi/Downloads/index-19.html -->
+<html lang="ko" data-hwp-extension="rhwp" data-hwp-extension-version="0.8.2"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASK Bridge — 제조 데이터 표준화 MVP</title>
+<meta name="description" content="컬럼명·단위·날짜 형식이 제각각인 공장 데이터를 국제표준 스키마로 옮기고, 기업끼리 안전하게 합치는 알고리즘 시연.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net/">
+<link rel="stylesheet" href="./index_files/pretendard-dynamic-subset.css">
 <style>
 :root{
-  --bg:#f4f2ee;--card:#fff;--ink:#191b21;--ink2:#3a3f4a;--mute:#71767f;--faint:#a0a5ad;
-  --rule:#dedbd4;--rule2:#eeece7;
-  --ac:#5b3a94;--ac-bg:#f1ecf9;
-  --at:#b8562a;--at-bg:#fbeee7;
-  --ok:#2d6b4f;--ok-bg:#e8f2ec;
-  --deep:#1c1a26;
-  --sans:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --ink:#16283B; --ink-soft:#2C4054; --muted:#6E7C86; --muted-2:#93A0A8;
+  --teal:#2E7D74; --teal-d:#215B55; --mist:#E7F0EE;
+  --amber:#C8801F; --amber-bg:#FBF1DE;
+  --clay:#A2463C; --blush:#FBECE9;
+  --paper:#FAF9F7; --card:#FFFFFF; --line:#E4DFD8; --line-2:#CDC5BB;
+  --r:10px; --r-s:4px;
+  --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"D2Coding","Noto Sans Mono CJK KR",monospace;
+  --sans:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;
-  line-height:1.62;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;}
-button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
-input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink);border:1px solid var(--rule);
-  border-radius:5px;padding:9px 11px;width:100%;background:#fff;}
-textarea{resize:vertical;line-height:1.55;}
-input:focus,textarea:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px;border-color:transparent;}
-input[type=range]{padding:0;border:none;accent-color:var(--ac);}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans); background:var(--paper); color:var(--ink);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0; font-weight:800; letter-spacing:-.028em; line-height:1.25}
+h1{font-size:19px} h2{font-size:22px} h3{font-size:16px} h4{font-size:14px}
+p{margin:0}
+a{color:var(--teal)}
+button{font-family:inherit}
+.mono{font-family:var(--mono); font-variant-ligatures:none; font-feature-settings:"tnum"}
 
-/* 헤더 */
-header{background:var(--deep);color:#f0eef5;padding:11px 20px;display:flex;align-items:center;
-  gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:60;}
-.ttl{font-weight:800;font-size:15px;letter-spacing:-.02em;background:transparent;border:none;
-  color:#fff;padding:4px 8px;width:auto;min-width:200px;flex:0 1 320px;}
-.ttl:focus{outline:1px solid #4b4560;background:#252235;}
-.cyc{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:5px 10px;border-radius:3px;
-  background:#332c47;color:#c3b3e8;font-weight:700;}
-.hsp{flex:1;}
-.tm{display:flex;align-items:center;gap:6px;}
-.tm .cl{font-family:var(--mono);font-size:19px;font-weight:700;min-width:62px;text-align:right;}
-.tm .cl.hot{color:#ffb082;} .tm .cl.done{color:#ff7a5c;}
-.tb{font-family:var(--mono);font-size:10px;font-weight:700;padding:5px 8px;border-radius:3px;background:#332c47;color:#a99ec9;}
-.tb:hover{background:#443a5e;color:#fff;}
+/* ───────────────────────────── 골격 ───────────────────────────── */
+.app{min-height:100vh; display:flex; flex-direction:column}
+.hdr{
+  position:sticky; top:0; z-index:40; background:var(--ink); color:#fff;
+  display:flex; align-items:center; gap:16px; padding:11px 20px; flex-wrap:wrap;
+}
+.brand{display:flex; align-items:baseline; gap:9px}
+.brand b{font-size:17px; font-weight:800; letter-spacing:-.03em}
+.brand span{font-size:11px; color:#93AABE; letter-spacing:.02em}
+.hdr .spacer{flex:1}
+.stats{display:flex; gap:6px; flex-wrap:wrap}
+.stat{
+  font-size:11px; padding:3px 9px; border-radius:999px;
+  background:rgba(255,255,255,.08); color:#D6E2EC; white-space:nowrap;
+}
+.stat b{color:#fff; font-family:var(--mono); font-weight:700}
+.hdr button{
+  background:transparent; border:1px solid rgba(255,255,255,.28); color:#D6E2EC;
+  font-size:11.5px; padding:5px 11px; border-radius:var(--r-s); cursor:pointer;
+}
+.hdr button:hover{background:rgba(255,255,255,.1); color:#fff}
 
-/* 레이아웃 */
-.shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 52px);align-items:start;}
-@media(max-width:900px){.shell{grid-template-columns:1fr;}}
-nav{border-right:1px solid var(--rule);padding:16px 12px 40px;position:sticky;top:52px;}
-@media(max-width:900px){nav{position:static;border-right:none;border-bottom:1px solid var(--rule);
-  display:flex;gap:6px;overflow-x:auto;padding:12px;}}
-.nv{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:5px;width:100%;
-  text-align:left;font-size:13.5px;font-weight:600;color:var(--ink2);margin-bottom:2px;white-space:nowrap;}
-.nv:hover{background:var(--rule2);}
-.nv.on{background:var(--ac);color:#fff;}
-.nv .nn{font-family:var(--mono);font-size:10px;font-weight:700;opacity:.72;flex:0 0 auto;}
-.nv .dt{width:6px;height:6px;border-radius:50%;background:var(--rule);margin-left:auto;flex:0 0 auto;}
-.nv .dt.f{background:var(--ok);} .nv.on .dt{background:rgba(255,255,255,.45);} .nv.on .dt.f{background:#fff;}
-.nvgrp{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--faint);
-  padding:14px 11px 6px;font-weight:700;}
-@media(max-width:900px){.nvgrp{display:none;}}
+.body{display:flex; flex:1; align-items:stretch}
+.rail{
+  width:212px; flex:0 0 212px; background:#fff; border-right:1px solid var(--line);
+  padding:16px 0; position:sticky; top:49px; align-self:flex-start;
+}
+.station{
+  display:grid; grid-template-columns:26px 1fr; gap:10px; align-items:start;
+  padding:10px 16px; cursor:pointer; border-left:3px solid transparent; position:relative;
+}
+.station .n{
+  width:26px; height:26px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  background:var(--paper); color:var(--muted); border:1px solid var(--line-2);
+}
+.station .t{font-weight:700; font-size:13.5px; letter-spacing:-.02em}
+.station .s{font-size:11px; color:var(--muted-2); line-height:1.4; margin-top:1px}
+.station:hover{background:var(--paper)}
+.station.on{border-left-color:var(--teal); background:var(--mist)}
+.station.on .n{background:var(--teal); color:#fff; border-color:var(--teal)}
+.station.on .t{color:var(--teal-d)}
+.station.done .n{background:#fff; color:var(--teal); border-color:var(--teal)}
+.station .badge{
+  position:absolute; right:14px; top:12px; font-family:var(--mono); font-size:10.5px;
+  background:var(--amber); color:#fff; padding:1px 6px; border-radius:999px; font-weight:700;
+}
+.stage{flex:1; min-width:0; padding:26px 30px 70px; max-width:1180px}
 
-main{padding:24px 28px 90px;max-width:940px;}
-@media(max-width:600px){main{padding:18px 16px 90px;}}
+/* ───────────────────────────── 공통 ───────────────────────────── */
+.eyebrow{
+  font-size:11px; font-weight:700; letter-spacing:.1em;
+  color:var(--teal); margin-bottom:7px;
+}
+.lede{color:var(--muted); font-size:13.5px; margin-top:8px; max-width:74ch}
+.sec{margin-top:30px}
+.sec>h3{display:flex; align-items:center; gap:9px; margin-bottom:12px}
+.sec>h3 .hint{font-weight:400; font-size:12px; color:var(--muted-2); letter-spacing:0}
+.panel{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px}
+.panel.flush{padding:0; overflow:hidden}
+.grid{display:grid; gap:12px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.note{
+  font-size:12.5px; color:var(--muted); background:var(--paper);
+  border-left:3px solid var(--line-2); padding:9px 12px; border-radius:0 var(--r-s) var(--r-s) 0;
+}
+.note.warn{background:var(--amber-bg); border-left-color:var(--amber); color:#7A5514}
+.note.bad{background:var(--blush); border-left-color:var(--clay); color:#7C3229}
+.note.good{background:var(--mist); border-left-color:var(--teal); color:var(--teal-d)}
+.empty{
+  border:1px dashed var(--line-2); border-radius:var(--r); padding:34px 20px;
+  text-align:center; color:var(--muted); font-size:13px;
+}
+.empty b{display:block; color:var(--ink); font-size:14.5px; margin-bottom:5px}
 
-.ph{margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--ink);}
-.ph .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ac);font-weight:700;text-transform:uppercase;}
-.ph h1{font-size:26px;font-weight:800;letter-spacing:-.032em;margin-top:5px;}
-.ph .s{font-size:14px;color:var(--mute);margin-top:5px;}
+.btn{
+  border:1px solid var(--line-2); background:#fff; color:var(--ink);
+  font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:var(--r-s);
+  cursor:pointer; white-space:nowrap;
+}
+.btn:hover{border-color:var(--ink-soft)}
+.btn.pri{background:var(--teal); border-color:var(--teal); color:#fff}
+.btn.pri:hover{background:var(--teal-d); border-color:var(--teal-d)}
+.btn.dark{background:var(--ink); border-color:var(--ink); color:#fff}
+.btn.dark:hover{background:#0E1C2B}
+.btn.dgr{color:var(--clay); border-color:#E3C4BF}
+.btn.dgr:hover{background:var(--blush); border-color:var(--clay)}
+.btn.sm{font-size:11.5px; padding:5px 9px}
+.btn:disabled{opacity:.4; cursor:not-allowed}
+.btn:focus-visible,.station:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--teal); outline-offset:2px;
+}
+select,input[type=text],input[type=number],textarea{
+  font-family:inherit; font-size:12.5px; padding:6px 9px;
+  border:1px solid var(--line-2); border-radius:var(--r-s); background:#fff; color:var(--ink);
+}
+textarea{font-family:var(--mono); font-size:11.5px; line-height:1.7; width:100%; resize:vertical}
+label.sw{display:inline-flex; align-items:center; gap:7px; cursor:pointer; font-size:12.5px; font-weight:600}
+label.sw input{appearance:none; width:34px; height:19px; border-radius:999px; background:var(--line-2); position:relative; cursor:pointer; transition:background .15s; margin:0}
+label.sw input::after{content:""; position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%; background:#fff; transition:transform .15s}
+label.sw input:checked{background:var(--teal)}
+label.sw input:checked::after{transform:translateX(15px)}
 
-.hint{background:var(--deep);color:#e8e5ef;border-radius:6px;padding:14px 17px;margin-bottom:18px;font-size:14px;line-height:1.68;}
-.hint .k{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:#c9a9ff;font-weight:700;text-transform:uppercase;display:block;margin-bottom:6px;}
-.hint b{color:#e0c9ff;}
+.tag{
+  font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:var(--r-s);
+  letter-spacing:.02em; white-space:nowrap;
+}
+.tag.t{background:var(--mist); color:var(--teal-d)}
+.tag.a{background:var(--amber-bg); color:#8A5A11}
+.tag.c{background:var(--blush); color:var(--clay)}
+.tag.n{background:#EDEFF1; color:var(--ink-soft)}
+.tag.dark{background:var(--ink); color:#fff}
 
-.card{background:var(--card);border:1px solid var(--rule);border-radius:7px;padding:16px;margin-bottom:12px;}
-.card.at{border-left:3px solid var(--at);background:var(--at-bg);}
-.card.ok{border-left:3px solid var(--ok);background:var(--ok-bg);}
-.card.ac{border-left:3px solid var(--ac);background:var(--ac-bg);}
-.ch{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
-.ch h3{font-size:15px;font-weight:800;letter-spacing:-.02em;}
-.bd{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:3px 8px;border-radius:3px;background:var(--rule2);color:var(--mute);}
-.bd.g{background:var(--ok-bg);color:var(--ok);} .bd.a{background:var(--at-bg);color:var(--at);}
+/* ───────────────────────────── 표 ───────────────────────────── */
+.tblwrap{overflow:auto; max-height:440px; border-radius:var(--r)}
+table{border-collapse:collapse; width:100%; font-size:12px}
+th,td{padding:6px 10px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap}
+thead th{
+  position:sticky; top:0; background:var(--ink); color:#C9D6E1; z-index:2;
+  font-size:10.5px; font-weight:700; letter-spacing:.03em; border-bottom:none;
+}
+thead th small{display:block; color:#7D95A8; font-weight:500; font-size:9.5px; letter-spacing:0; font-family:var(--mono)}
+tbody tr:nth-child(even){background:#FCFCFB}
+tbody tr:hover{background:var(--mist)}
+td.num,td.mono,th.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+td.nul{color:var(--muted-2)}
+td.ok{color:var(--teal-d); font-weight:700}
+td.nok{color:var(--clay); font-weight:700}
+.raw td,.raw th{font-family:var(--mono); font-size:11.5px}
+.raw thead th{background:var(--clay); color:#F7DFDA}
 
-.fl{display:block;font-size:11.5px;font-weight:700;color:var(--mute);margin-bottom:5px;}
-.fd{margin-bottom:12px;} .fd:last-child{margin-bottom:0;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-@media(max-width:760px){.g2,.g3{grid-template-columns:1fr;}}
+/* ─────────────────── 반입 카드 ─────────────────── */
+.dscard{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:14px; display:flex; flex-direction:column; gap:9px;
+}
+.dscard.sel{border-color:var(--teal); box-shadow:0 0 0 2px var(--mist)}
+.dscard .top{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
+.dscard .co{font-weight:800; font-size:14.5px; letter-spacing:-.02em}
+.dscard .nt{font-size:11.5px; color:var(--muted); line-height:1.5}
+.hdrs{display:flex; flex-wrap:wrap; gap:4px}
+.hdrs code{
+  font-family:var(--mono); font-size:10.5px; background:var(--blush); color:var(--clay);
+  padding:2px 6px; border-radius:3px; border:1px solid #F0DAD5;
+}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:5px;
-  font-size:13.5px;font-weight:700;background:var(--ink);color:#fff;transition:opacity .15s;}
-.btn:hover{opacity:.86;} .btn:disabled{opacity:.3;cursor:not-allowed;}
-.btn.ac{background:var(--ac);} .btn.ok{background:var(--ok);}
-.btn.gh{background:transparent;border:1px solid var(--rule);color:var(--ink2);}
-.btn.gh:hover{background:var(--rule2);opacity:1;}
-.btn.sm{padding:6px 11px;font-size:12px;}
-.br{display:flex;gap:8px;flex-wrap:wrap;}
+/* ─────────────────── 4단계 진행바 ─────────────────── */
+.pipebar{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+.pipebar div{background:#fff; padding:11px 13px}
+.pipebar .k{font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.04em}
+.pipebar .v{font-family:var(--mono); font-size:17px; font-weight:700; margin-top:2px; letter-spacing:-.02em}
+.pipebar .d{font-size:10.5px; color:var(--muted-2); line-height:1.4}
+.pipebar div:nth-child(1) .v{color:var(--ink-soft)}
+.pipebar div:nth-child(2) .v{color:var(--teal)}
+.pipebar div:nth-child(3) .v{color:var(--ink)}
+.pipebar div:nth-child(4) .v{color:var(--amber)}
 
-.row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;}
-.row .x{color:var(--faint);font-size:17px;line-height:1;padding:8px 3px 0;flex:0 0 auto;}
-.row .x:hover{color:var(--at);}
-.row .no{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ac);padding:11px 0 0;flex:0 0 18px;}
+/* ─────────────────── 컬럼 트랙 (핵심 화면) ─────────────────── */
+.track{background:var(--card); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:12px}
+.track.q{border-color:var(--amber)}
+.track.ap{border-color:#CDE0DC}
+.track>.th{
+  display:flex; align-items:center; gap:10px; padding:11px 15px;
+  background:var(--paper); border-bottom:1px solid var(--line); flex-wrap:wrap;
+}
+.track>.th .src{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--clay)}
+.track>.th .arw{color:var(--muted-2)}
+.track>.th .dst{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--teal-d)}
+.track>.th .unit{font-family:var(--mono); font-size:11px; color:var(--muted)}
+.track>.th .sp{flex:1}
+.step{display:grid; grid-template-columns:124px 1fr; border-top:1px solid var(--line)}
+.step:first-child{border-top:none}
+.step>.lab{
+  padding:12px 12px 12px 15px; font-size:11px; font-weight:700; color:var(--muted);
+  background:#FCFCFB; border-right:1px solid var(--line); line-height:1.4;
+}
+.step>.lab b{display:block; color:var(--ink); font-size:12px; letter-spacing:-.01em}
+.step>.lab i{display:block; font-style:normal; font-size:10px; color:var(--muted-2); margin-top:2px}
+.step>.bd{padding:12px 15px; min-width:0}
+.ev{font-size:12.5px; color:var(--ink-soft); margin-bottom:4px}
+.ev:last-child{margin-bottom:0}
+.ev.dim{color:var(--muted); font-size:12px}
 
-/* 칩 */
-.cps{display:flex;gap:5px;flex-wrap:wrap;}
-.cp{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:5px 9px;border-radius:12px;
-  border:1px solid var(--rule);background:#fff;color:var(--mute);}
-.cp:hover{border-color:var(--ink2);color:var(--ink2);}
-.cp.on{background:var(--ac);border-color:var(--ac);color:#fff;}
+.lane{border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:var(--r-s); padding:10px 12px; margin-bottom:8px; background:#fff}
+.lane:last-child{margin-bottom:0}
+.lane.rej{border-left-color:var(--clay); background:#FDFAF9}
+.lane .lh{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:5px}
+.lane .u{font-family:var(--mono); font-size:12.5px; font-weight:700}
+.lane.rej .u{color:var(--clay); text-decoration:line-through; text-decoration-thickness:1px;
+  text-decoration-color:rgba(162,70,60,.5)}
+.lane .why{font-size:11.5px; color:var(--muted); flex:1; min-width:180px}
+.calc{font-family:var(--mono); font-size:12px; background:var(--paper); border:1px solid var(--line); border-radius:3px; padding:6px 9px; margin-bottom:6px; overflow-x:auto; white-space:nowrap}
+.calc .in{color:var(--clay)}
+.calc .eq{color:var(--muted-2); margin:0 6px}
+.calc .out{color:var(--teal-d); font-weight:700}
+.lane.rej .calc .out{color:var(--clay)}
+.chks{display:flex; flex-wrap:wrap; gap:5px}
+.chks.col{padding-top:9px; margin-top:9px; border-top:1px dashed var(--line)}
+.chks.col::before{content:"컬럼 전체"; font-size:10.5px; font-weight:700; color:var(--muted-2); align-self:center; margin-right:3px}
+.chk{font-size:10.5px; padding:2px 7px; border-radius:3px; display:inline-flex; gap:5px; align-items:center; max-width:100%}
+.chk b{font-family:var(--mono); font-weight:700; letter-spacing:.02em}
+.chk.pass{background:var(--mist); color:var(--teal-d)}
+.chk.warn{background:var(--amber-bg); color:#7A5514}
+.chk.fail{background:var(--blush); color:var(--clay)}
+.chk span{white-space:normal}
+.stamp{
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em;
+  border:1.5px solid var(--clay); color:var(--clay); padding:1px 6px; border-radius:3px;
+  transform:rotate(-2deg);
+}
+.stamp.ok{border-color:var(--teal); color:var(--teal)}
 
-/* 아이디어 */
-.ids{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:9px;margin-top:12px;}
-.id{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:11px 12px;position:relative;}
-.id .t{font-size:14px;font-weight:600;line-height:1.5;padding-right:16px;}
-.id .x{position:absolute;top:7px;right:8px;color:var(--faint);font-size:14px;line-height:1;}
-.id .x:hover{color:var(--at);}
-.id .f{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:6px;}
+.qbox{background:var(--amber-bg); border:1px solid #EBD3A8; border-radius:var(--r-s); padding:11px 13px; margin-bottom:9px}
+.qbox .ql{font-weight:700; font-size:13px; color:#7A5514; margin-bottom:3px}
+.qbox .qw{font-size:11.5px; color:#8A6520; margin-bottom:9px; line-height:1.55}
+.qbox .qa{display:flex; gap:7px; flex-wrap:wrap; align-items:center}
+.qbox .qa .btn{background:#fff; border-color:#DCC08A}
+.qbox .qa .btn:hover{border-color:var(--amber); background:#fff}
 
-/* 평가 */
-.ev{border:1px solid var(--rule);border-radius:6px;background:#fff;margin-bottom:9px;overflow:hidden;}
-.ev .h{padding:11px 13px;display:flex;gap:11px;align-items:center;border-bottom:1px solid var(--rule2);}
-.ev .h .t{flex:1;font-size:14px;font-weight:600;line-height:1.45;}
-.ev .h .sc{font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 9px;border-radius:4px;
-  background:var(--ac-bg);color:var(--ac);flex:0 0 auto;}
-.ev .b{padding:11px 13px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-@media(max-width:700px){.ev .b{grid-template-columns:1fr 1fr;}}
-.sl .l{font-size:10.5px;font-weight:700;color:var(--mute);display:flex;justify-content:space-between;margin-bottom:3px;}
-.sl .l b{font-family:var(--mono);color:var(--ac);}
+/* ─────────────────── KPI / 수렴 ─────────────────── */
+.kpi{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:13px 15px}
+.kpi .k{font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:.05em}
+.kpi .v{font-family:var(--mono); font-size:25px; font-weight:700; letter-spacing:-.03em; line-height:1.2; margin-top:3px}
+.kpi .d{font-size:11px; color:var(--muted-2); margin-top:2px; line-height:1.45}
+.kpi.t .v{color:var(--teal)} .kpi.a .v{color:var(--amber)} .kpi.c .v{color:var(--clay)}
 
-/* 2x2 */
-.mx{position:relative;border:1px solid var(--rule);background:#fff;border-radius:6px;
-  height:320px;margin:12px 0;}
-.mx .ax{position:absolute;background:var(--rule2);}
-.mx .ax.v{left:50%;top:0;bottom:0;width:1px;} .mx .ax.h{top:50%;left:0;right:0;height:1px;}
-.mx .lb{position:absolute;font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.06em;}
-.mx .q{position:absolute;font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;}
-.mx .pt{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--ac);
-  transform:translate(-50%,50%);cursor:default;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);}
-.mx .pt:hover{width:15px;height:15px;z-index:5;}
-.mx .pt span{position:absolute;left:14px;top:-6px;font-size:11px;font-weight:600;white-space:nowrap;
-  background:rgba(255,255,255,.94);padding:2px 6px;border-radius:3px;display:none;box-shadow:0 1px 4px rgba(0,0,0,.15);}
-.mx .pt:hover span{display:block;}
+.conv{background:var(--ink); border-radius:var(--r); padding:18px; color:#fff; overflow:hidden}
+.conv h4{color:#fff; margin-bottom:3px}
+.conv .sub{font-size:12px; color:#9FB4C5; margin-bottom:14px}
+.conv .lanes{display:grid; gap:8px; margin-bottom:14px}
+.conv .cl{display:grid; grid-template-columns:74px 1fr; gap:11px; align-items:center}
+.conv .cl .who{font-size:11.5px; font-weight:700; color:#9FB4C5}
+.conv .cl .raw{font-family:var(--mono); font-size:11.5px; color:#F0C6BE; background:rgba(162,70,60,.28); padding:6px 9px; border-radius:3px; overflow-x:auto; white-space:nowrap}
+.conv .out{display:grid; grid-template-columns:74px 1fr; gap:11px; align-items:center; padding-top:13px; border-top:1px solid rgba(255,255,255,.14)}
+.conv .out .who{font-size:11.5px; font-weight:700; color:#8FD3C8}
+.conv .out .std{font-family:var(--mono); font-size:12.5px; color:#CFF0E9; background:rgba(46,125,116,.3); padding:8px 10px; border-radius:3px; font-weight:700; overflow-x:auto; white-space:nowrap}
+.conv .foot{font-size:11.5px; color:#9FB4C5; margin-top:12px; line-height:1.6}
 
-/* 작업 */
-.tk{display:grid;grid-template-columns:1fr 96px 108px 96px 26px;gap:7px;margin-bottom:7px;align-items:center;}
-@media(max-width:760px){.tk{grid-template-columns:1fr 1fr;}}
-.tk select,.tk input{font-size:13px;padding:7px 9px;}
-.st-todo{background:#fff;} .st-doing{background:#fff8e8;} .st-done{background:var(--ok-bg);} .st-block{background:var(--at-bg);}
+.bars{display:grid; gap:9px}
+.bar{display:grid; grid-template-columns:150px 1fr 116px; gap:10px; align-items:center; font-size:11.5px}
+.bar .nm{color:var(--ink-soft); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.bar .tr{height:8px; background:var(--paper); border:1px solid var(--line); border-radius:999px; overflow:hidden; position:relative}
+.bar .fl{position:absolute; top:0; bottom:0; border-radius:999px}
+.bar .vl{font-family:var(--mono); font-size:11px; color:var(--muted); text-align:right}
 
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-@media(max-width:820px){.board{grid-template-columns:1fr 1fr;}}
-.col{background:var(--rule2);border-radius:6px;padding:10px;min-height:120px;}
-.col .cn{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--mute);margin-bottom:9px;display:flex;justify-content:space-between;}
-.tc{background:#fff;border:1px solid var(--rule);border-radius:5px;padding:9px 10px;margin-bottom:6px;font-size:13px;line-height:1.45;}
-.tc .m{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:4px;}
-.tc .mv{display:flex;gap:4px;margin-top:7px;}
-.tc .mv button{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 6px;border-radius:3px;
-  background:var(--rule2);color:var(--mute);}
-.tc .mv button:hover{background:var(--ac);color:#fff;}
+/* ─────────────────── 사전 / 공유 ─────────────────── */
+.dictrow{display:grid; grid-template-columns:1fr 1fr auto; gap:12px; padding:10px 14px; border-bottom:1px solid var(--line); align-items:center}
+.dictrow:last-child{border-bottom:none}
+.dictrow .a{font-family:var(--mono); font-size:12px; color:var(--clay); font-weight:700}
+.dictrow .b{font-family:var(--mono); font-size:12px; color:var(--teal-d)}
+.dictrow .m{font-size:11px; color:var(--muted-2)}
+.dictgrp{background:#fff; border:1px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:12px}
+.dictgrp .gh{padding:10px 14px; background:var(--paper); border-bottom:1px solid var(--line); display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.dictgrp .gh b{font-family:var(--mono); font-size:13px}
 
-.bar{height:7px;background:var(--rule2);border-radius:4px;overflow:hidden;margin:10px 0 4px;}
-.bar i{display:block;height:100%;background:var(--ok);transition:width .25s;}
+.cocard{background:#fff; border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+.cocard .ch{padding:12px 14px; border-bottom:1px solid var(--line); display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.cocard .ch b{font-size:14px; font-weight:800; letter-spacing:-.02em}
+.cocard .cb{padding:12px 14px}
+.fchips{display:flex; flex-wrap:wrap; gap:5px; margin-top:7px}
+.fchip{font-family:var(--mono); font-size:10.5px; padding:3px 7px; border-radius:3px; border:1px solid var(--line-2); background:#fff; color:var(--muted); cursor:pointer; user-select:none}
+.fchip.on{background:var(--mist); border-color:var(--teal); color:var(--teal-d); font-weight:700}
+.fchip.lock{opacity:.45; cursor:not-allowed}
 
-/* 검토 */
-.rv{display:grid;grid-template-columns:1fr 120px 96px;gap:8px;align-items:center;margin-bottom:7px;}
-@media(max-width:600px){.rv{grid-template-columns:1fr;}}
-.tog{display:flex;gap:3px;}
-.tog button{flex:1;font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 0;border:1px solid var(--rule);
-  border-radius:4px;background:#fff;color:var(--faint);}
-.tog button.on.y{background:var(--ok);border-color:var(--ok);color:#fff;}
-.tog button.on.n{background:var(--at);border-color:var(--at);color:#fff;}
+.logrow{display:grid; grid-template-columns:132px 78px 1fr; gap:10px; padding:7px 13px; border-bottom:1px solid var(--line); font-size:11.5px; align-items:start}
+.logrow:last-child{border-bottom:none}
+.logrow .at{font-family:var(--mono); font-size:10.5px; color:var(--muted-2)}
+.logrow .ms{color:var(--ink-soft); line-height:1.5}
 
-.sent{background:var(--deep);color:#efedf5;border-radius:7px;padding:19px 21px;font-size:18px;
-  line-height:1.72;font-weight:500;letter-spacing:-.02em;margin-top:12px;}
-.sent .p{color:#7d7295;font-style:italic;} .sent b{color:#d9bfff;}
+.toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+  background:var(--ink); color:#fff; font-size:12.5px; padding:10px 18px;
+  border-radius:999px; z-index:90; box-shadow:0 6px 24px rgba(22,40,59,.26);
+  opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; max-width:88vw; text-align:center;
+}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(-4px)}
 
-.ck{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule2);cursor:pointer;}
-.ck:last-child{border-bottom:none;}
-.ck .b{width:18px;height:18px;border:2px solid var(--rule);border-radius:4px;flex:0 0 auto;margin-top:2px;
-  display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;}
-.ck.on .b{background:var(--ok);border-color:var(--ok);}
-.ck .l{font-size:13.5px;line-height:1.5;} .ck.on .l{color:var(--mute);text-decoration:line-through;}
+/* ─────────────────── 반응형 ─────────────────── */
+@media (max-width:900px){
+  .body{flex-direction:column}
+  .rail{
+    width:100%; flex:none; position:sticky; top:0; display:flex; overflow-x:auto;
+    border-right:none; border-bottom:1px solid var(--line); padding:0; z-index:30;
+  }
+  .station{flex:0 0 auto; grid-template-columns:22px auto; border-left:none; border-bottom:3px solid transparent; padding:9px 13px}
+  .station.on{border-left-color:transparent; border-bottom-color:var(--teal)}
+  .station .s{display:none}
+  .station .badge{position:static; margin-left:4px}
+  .stage{padding:18px 15px 60px}
+  .sec>h3{flex-wrap:wrap; row-gap:2px}
+  .sec>h3 .hint{flex-basis:100%}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .pipebar{grid-template-columns:repeat(2,1fr)}
+  .step{grid-template-columns:1fr}
+  .step>.lab{border-right:none; border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:baseline; padding:8px 13px}
+  .step>.lab i{margin-top:0}
+  .bar{grid-template-columns:1fr; gap:3px}
+  .bar .vl{text-align:left}
+  .conv .cl,.conv .out{grid-template-columns:1fr; gap:3px}
+  .dictrow{grid-template-columns:1fr}
+  .logrow{grid-template-columns:1fr; gap:2px}
+  .hdr{padding:9px 14px; gap:10px}
+  .stats{width:100%; order:3}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 
-.tiny{font-size:11.5px;color:var(--mute);line-height:1.55;margin-top:5px;}
-.hide{display:none!important;}
-.out{font-family:var(--mono);font-size:11.5px;line-height:1.7;background:#131118;color:#d3cee0;
-  padding:15px;border-radius:6px;white-space:pre-wrap;max-height:360px;overflow-y:auto;margin-top:11px;}
-.nav2{display:flex;gap:8px;margin-top:22px;padding-top:16px;border-top:1px solid var(--rule);}
-
-footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--rule);
-  padding:10px 20px;display:flex;gap:9px;align-items:center;z-index:55;flex-wrap:wrap;}
-footer .s{font-family:var(--mono);font-size:11px;color:var(--mute);} footer .sp{flex:1;}
 </style>
 </head>
 <body>
-
-<header>
-  <input class="ttl" id="pTitle" value="새 프로젝트" placeholder="프로젝트 이름">
-  <span class="cyc" id="cyc">CYCLE 1</span>
-  <span class="hsp"></span>
-  <div class="tm">
-    <button class="tb" data-min="5">5분</button>
-    <button class="tb" data-min="10">10분</button>
-    <button class="tb" data-min="15">15분</button>
-    <button class="tb" data-min="25">25분</button>
-    <button class="tb" id="tStop">정지</button>
-    <span class="cl" id="clock">--:--</span>
+<div class="app">
+  <header class="hdr">
+    <div class="brand"><b>ASK&nbsp;Bridge</b><span>제조 데이터 표준화 · MVP</span></div>
+    <div class="spacer"></div>
+    <div class="stats" id="stats"><span class="stat">반입 <b>3</b></span><span class="stat">확답 대기 <b>0</b></span><span class="stat">표준 행 <b>0</b></span><span class="stat">사전 <b>0</b></span><span class="stat">공유 풀 <b>0</b></span></div>
+    <button data-act="reset" title="반입·발행·사전·로그를 모두 지웁니다">처음부터</button>
+  </header>
+  <div class="body">
+    <nav class="rail" id="rail"><div class="station on done" tabindex="0" data-act="go" data-v="intake"><div class="n">1</div><div><div class="t">반입</div><div class="s">원본 그대로 올린다</div></div></div><div class="station " tabindex="0" data-act="go" data-v="std"><div class="n">2</div><div><div class="t">표준화</div><div class="s">네 단계로 옮긴다</div></div></div><div class="station " tabindex="0" data-act="go" data-v="data"><div class="n">3</div><div><div class="t">표준 데이터</div><div class="s">한 스키마로 쌓인다</div></div></div><div class="station " tabindex="0" data-act="go" data-v="dict"><div class="n">4</div><div><div class="t">매핑 사전</div><div class="s">질문이 줄어든다</div></div></div><div class="station " tabindex="0" data-act="go" data-v="share"><div class="n">5</div><div><div class="t">데이터 교환</div><div class="s">기업끼리 합친다</div></div></div></nav>
+    <main class="stage" id="stage"><div class="eyebrow">① 각자 올린다</div><h2>공장 원본을 그대로 반입합니다.</h2><p class="lede">형식을 맞춰 오라고 요구하지 않습니다. 컬럼명도 단위도 날짜 형식도 제각각인 채로 올리면 됩니다. 맞추는 일은 다음 단계에서 우리가 합니다.</p><div class="sec"><h3>시연용 데이터셋 <span class="hint">앞의 세 곳은 같은 설비 모델, 뒤의 두 곳은 공개 데이터 반입</span></h3><div class="grid g2"><div class="dscard sel"><div class="top"><span class="co">A사 (한빛열처리)</span><span class="tag n">설비 HT-2400</span><span class="tag t">반입됨</span></div><div class="nt">국내 열처리 라인. 컬럼명은 한글, 온도는 소수점을 없애려 10배 정수로 저장.</div><div class="hdrs"><code>시각</code><code>설비</code><code>온도*10(°C)</code><code>판정</code></div><div class="row" style="margin-top:2px"><button class="btn  sm" data-act="intake" data-id="A">다시 반입</button><span class="mono" style="font-size:11px;color:var(--muted-2)">12행 · 4열</span><button class="btn sm" data-act="peekmd" data-id="A">설명서 보기</button></div></div><div class="dscard sel"><div class="top"><span class="co">B사 (대성정밀)</span><span class="tag n">설비 HT-2400</span><span class="tag t">반입됨</span></div><div class="nt">같은 설비 모델이지만 컬럼명은 영문 약어, 시각은 미국식, 온도는 화씨 10배.</div><div class="hdrs"><code>TIME</code><code>MACHINE</code><code>TEMP1</code><code>RESULT</code></div><div class="row" style="margin-top:2px"><button class="btn  sm" data-act="intake" data-id="B">다시 반입</button><span class="mono" style="font-size:11px;color:var(--muted-2)">12행 · 4열</span><button class="btn sm" data-act="peekmd" data-id="B">설명서 보기</button></div></div><div class="dscard sel"><div class="top"><span class="co">C사 (신성열처리)</span><span class="tag n">설비 HT-2400</span><span class="tag t">반입됨</span></div><div class="nt">시각은 점 구분 두 자리 연도, 온도는 화씨 실수, 판정은 불량 여부 Y/N.</div><div class="hdrs"><code>일시</code><code>설비명</code><code>노온도(°F)</code><code>불량</code></div><div class="row" style="margin-top:2px"><button class="btn  sm" data-act="intake" data-id="C">다시 반입</button><span class="mono" style="font-size:11px;color:var(--muted-2)">12행 · 4열</span><button class="btn sm" data-act="peekmd" data-id="C">설명서 보기</button></div></div><div class="dscard "><div class="top"><span class="co">D사 (공개 데이터 반입)</span><span class="tag n">설비 IIOT-LINE-01</span></div><div class="nt">Kaggle "IIoT Sensor Data for Predictive Maintenance" 형식. 컬럼명 temperature 하나로는 어느 지점인지 알 수 없다.</div><div class="hdrs"><code>temperature</code><code>vibration</code><code>pressure</code><code>machine_failure</code></div><div class="row" style="margin-top:2px"><button class="btn pri sm" data-act="intake" data-id="IIOT">반입하기</button><span class="mono" style="font-size:11px;color:var(--muted-2)">15행 · 4열</span><button class="btn sm" data-act="peekmd" data-id="IIOT">설명서 보기</button></div></div><div class="dscard "><div class="top"><span class="co">E사 (공개 데이터 반입)</span><span class="tag n">설비 AI4I-MILL-01</span></div><div class="nt">Kaggle "AI4I 2020 Predictive Maintenance" 형식. 온도는 켈빈, 판정 극성은 D사와 정반대다.</div><div class="hdrs"><code>UDI</code><code>Product ID</code><code>Type</code><code>Air temperature [K]</code><code>Process temperature [K]</code><code>Rotational speed [rpm]</code><code>Torque [Nm]</code><code>Tool wear [min]</code><code>Machine failure</code></div><div class="row" style="margin-top:2px"><button class="btn pri sm" data-act="intake" data-id="AI4I">반입하기</button><span class="mono" style="font-size:11px;color:var(--muted-2)">18행 · 9열</span><button class="btn sm" data-act="peekmd" data-id="AI4I">설명서 보기</button></div></div><div class="dscard "><div class="top"><span class="co">B사 (대성정밀)</span><span class="tag n">설비 HT-2400</span><span class="tag a">2차 배치</span></div><div class="nt">같은 설비, 같은 컬럼 구성의 다음 날 배치. 매핑 사전이 적립되어 있으면 물어볼 것이 없다.</div><div class="hdrs"><code>TIME</code><code>MACHINE</code><code>TEMP1</code><code>RESULT</code></div><div class="row" style="margin-top:2px"><button class="btn pri sm" data-act="intake" data-id="B2">반입하기</button><span class="mono" style="font-size:11px;color:var(--muted-2)">10행 · 4열</span><button class="btn sm" data-act="peekmd" data-id="B2">설명서 보기</button></div></div></div></div><div class="sec"><h3>내 파일 올리기 <span class="hint">CSV 한 개 + 설비 설명서(.md) 선택</span></h3><div class="panel"><div class="grid g2"><div><label style="font-size:11.5px;font-weight:700;color:var(--muted)">기업명</label><br><input type="text" id="upCo" placeholder="예: F사 (○○정밀)" style="width:100%;margin-top:4px"></div><div><label style="font-size:11.5px;font-weight:700;color:var(--muted)">설비 식별자</label><br><input type="text" id="upEq" placeholder="예: HT-2400" style="width:100%;margin-top:4px"></div></div><div class="row" style="margin-top:12px"><input type="file" id="upCsv" accept=".csv,.txt"><input type="file" id="upMd" accept=".md,.txt"><button class="btn pri" data-act="upload">반입하기</button></div><div class="note" style="margin-top:12px">설명서는 없어도 반입됩니다. 없으면 다음 단계에서 물어볼 것이 그만큼 늘어납니다.</div></div></div><div class="sec"><h3>반입된 원본 <span class="hint">A사 (한빛열처리) · 손대지 않은 그대로</span></h3><div class="panel flush"><div class="tblwrap"><table class="raw"><thead><tr><th>시각</th><th>설비</th><th>온도*10(°C)</th><th>판정</th></tr></thead><tbody><tr><td>2026-08-10 14:23</td><td>HT-2400</td><td>1874</td><td>OK</td></tr><tr><td>2026-08-10 14:24</td><td>HT-2400</td><td>1881</td><td>OK</td></tr><tr><td>2026-08-10 14:25</td><td>HT-2400</td><td>1902</td><td>OK</td></tr><tr><td>2026-08-10 14:26</td><td>HT-2400</td><td>1868</td><td>OK</td></tr><tr><td>2026-08-10 14:27</td><td>HT-2400</td><td>2251</td><td>NG</td></tr><tr><td>2026-08-10 14:28</td><td>HT-2400</td><td>2340</td><td>NG</td></tr><tr><td>2026-08-10 14:29</td><td>HT-2400</td><td>1996</td><td>OK</td></tr><tr><td>2026-08-10 14:30</td><td>HT-2400</td><td>1912</td><td>OK</td></tr><tr><td>2026-08-10 14:31</td><td>HT-2400</td><td>1889</td><td>OK</td></tr><tr><td>2026-08-10 14:32</td><td>HT-2400</td><td>1451</td><td>NG</td></tr><tr><td>2026-08-10 14:33</td><td>HT-2400</td><td>1877</td><td>OK</td></tr><tr><td>2026-08-10 14:34</td><td>HT-2400</td><td>1905</td><td>OK</td></tr></tbody></table></div></div></div><div class="row" style="margin-top:22px"><button class="btn dark" data-act="go" data-v="std">표준화 단계로 →</button></div></main>
   </div>
-</header>
-
-<div class="shell">
-  <nav id="nav"></nav>
-  <main id="main"></main>
 </div>
-
-<footer>
-  <span class="s" id="stat">—</span><span class="sp"></span>
-  <button class="btn gh sm" id="bLoad">불러오기</button>
-  <button class="btn gh sm" id="bSave">저장</button>
-  <button class="btn ac sm" id="bExport">문서로 뽑기</button>
-  <input type="file" id="fIn" accept=".json" class="hide">
-</footer>
-
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
-"use strict";
+/* ============================================================================
+   ASK Bridge — 표준화 엔진
+   ----------------------------------------------------------------------------
+   ① LLM      : 의미/단위 가설만 제안한다 (숫자 계산 금지)
+   ② 계산기    : 결정적 코드가 단위를 변환한다 (pint 역할)
+   ③ 검증 코드 : 변환 결과가 말이 되는지 기각/통과를 판정한다
+   ④ 사람      : 남은 후보에 확답한다 → 매핑 사전에 적립된다
+   ========================================================================== */
+var ASKB = (function () {
+  'use strict';
 
-const STAGES=[
-  {n:'01',t:'목표 설정',   g:'정의',   s:'무엇을 해결하거나 달성할지 정의한다',
-   h:'목표가 <b>"~를 개선한다"</b>로 끝나면 측정할 수 없습니다. 끝났는지 아닌지를 판별할 문장이어야 해요.<br>그리고 <b>안 할 것</b>을 먼저 적으세요. 범위는 적는 순간부터 새어 나갑니다.'},
-  {n:'02',t:'조사 · 자료 수집',g:'정의',s:'관련 정보, 사례, 데이터, 경쟁 사례, 사용자 요구를 모은다',
-   h:'자료부터 모으면 <b>읽기만 하다 끝납니다.</b> 먼저 <b>알아내야 할 질문</b>을 적고, 자료로 그 질문에 답을 채우세요.<br>답이 안 채워진 질문이 남아 있으면 조사가 안 끝난 겁니다.'},
-  {n:'03',t:'문제 분석',   g:'정의',   s:'수집한 자료를 바탕으로 핵심 문제와 원인을 파악한다',
-   h:'증상과 원인을 구분하세요. <b>"왜?"를 다섯 번</b> 물으면 대체로 표면에서 구조로 내려갑니다.<br>여기서 나온 근본 원인이 다음 단계 발산의 출발점이 됩니다.'},
-  {n:'04',t:'브레인스토밍', g:'발산',   s:'가능한 아이디어와 해결책을 최대한 다양하게 낸다',
-   h:'<b>이 단계에서 비판 금지.</b> 평가는 다음 단계에서 합니다. 지금은 개수가 목표입니다.<br>막히면 아래 발상 프롬프트를 쓰세요. 백지보다 빈칸 채우기가 훨씬 잘 나옵니다.'},
-  {n:'05',t:'아이디어 평가',g:'수렴',   s:'실현 가능성, 효과, 비용, 시급성으로 비교한다',
-   h:'네 축에 점수를 주면 가중 합계가 자동으로 계산됩니다. 가중치는 프로젝트마다 다르니 <b>먼저 가중치를 정하세요.</b><br>아래 2×2 지도에서 <b>우측 상단</b>이 먼저 손대야 할 영역입니다.'},
-  {n:'06',t:'방향 선정',   g:'수렴',   s:'최종적으로 실행할 아이디어나 전략을 결정한다',
-   h:'점수 1위를 그냥 고르지 마세요. 점수는 참고고 <b>선택 근거를 문장으로 쓰는 것</b>이 결정입니다.<br><b>버린 것과 그 이유를 기록</b>하세요. 나중에 "왜 그건 안 했냐"는 질문에 대한 답이 됩니다.'},
-  {n:'07',t:'계획 수립',   g:'실행',   s:'일정, 역할, 필요한 자원, 세부 작업을 정의한다',
-   h:'작업을 <b>반나절 단위</b>로 쪼개세요. 하루가 넘는 작업은 진행 상황이 안 보입니다.<br>담당자가 비어 있는 작업은 아무도 하지 않습니다. 예외 없습니다.'},
-  {n:'08',t:'실행',        g:'실행',   s:'계획에 따라 실제 작업을 진행한다',
-   h:'<b>막힘</b> 칸을 적극적으로 쓰세요. 막힌 걸 진행 중으로 두면 아무도 도와줄 수 없습니다.<br>막힌 작업이 이틀 이상 머물면 그건 계획이 틀린 겁니다. 7단계로 돌아가세요.'},
-  {n:'09',t:'검토 · 피드백',g:'회고',  s:'결과를 확인하고 문제점이나 개선점을 수집한다',
-   h:'1단계에 적은 성공 기준이 여기 그대로 올라옵니다. <b>기준을 나중에 고치지 마세요.</b><br>못 달성한 항목이 있는 게 실패가 아니라, 왜 못 했는지 모르는 게 실패입니다.'},
-  {n:'10',t:'수정 · 개선', g:'회고',   s:'피드백을 반영해 계획이나 결과물을 보완한다',
-   h:'개선 항목마다 <b>어느 단계로 되돌아갈지</b>를 정하세요. 그게 없으면 회고가 감상으로 끝납니다.<br>다 정했으면 아래에서 다음 사이클을 시작합니다.'},
+  /* --------------------------------------------------------------------------
+     1. 표준 스키마 (EUROMAP 77 / OPC UA 계열 명명 규칙 차용)
+        range : 물리적으로 말이 되는 범위. ③ 검증 코드가 가설을 기각하는 근거.
+     ------------------------------------------------------------------------ */
+  var SCHEMA = {
+    timestamp: {
+      unit: 'ISO 8601 (UTC)', kind: 'time', required: true,
+      desc: '측정 시각. 표준은 UTC 고정, 로컬 시각은 타임존 선언 후 변환'
+    },
+    machine_id: {
+      unit: '—', kind: 'id',
+      desc: '설비 식별자'
+    },
+    process_temp_c: {
+      unit: '°C', ucode: 'CEL', kind: 'num', range: [0, 1400],
+      desc: '공정 온도 — 노(furnace) 내부, 가공점 등 공정이 일어나는 지점'
+    },
+    ambient_temp_c: {
+      unit: '°C', ucode: 'CEL', kind: 'num', range: [-40, 80],
+      desc: '주변 온도 — 설비 외부 대기'
+    },
+    component_temp_c: {
+      unit: '°C', ucode: 'CEL', kind: 'num', range: [-20, 300],
+      desc: '부품 온도 — 모터·베어링 등 설비 구성품 표면'
+    },
+    rotational_speed_rpm: {
+      unit: '1/min', kind: 'num', range: [0, 30000],
+      desc: '회전 속도'
+    },
+    torque_nm: {
+      unit: 'N·m', kind: 'num', range: [0, 2000],
+      desc: '토크'
+    },
+    tool_wear_min: {
+      unit: 'min', kind: 'num', range: [0, 1000],
+      desc: '공구 마모 누적 시간'
+    },
+    vibration_mm_s: {
+      unit: 'mm/s', kind: 'num', range: [0, 200],
+      desc: '진동 속도 실효값(RMS)'
+    },
+    pressure_bar: {
+      unit: 'bar', ucode: 'BAR', kind: 'num', range: [0, 600],
+      desc: '압력'
+    },
+    verdict: {
+      unit: 'OK / NOK', kind: 'enum', required: true,
+      desc: '판정. OK=정상, NOK=불량. 표기 극성은 반드시 선언으로 확정한다'
+    }
+  };
+
+  var SCHEMA_ORDER = ['timestamp', 'machine_id', 'process_temp_c', 'ambient_temp_c',
+    'component_temp_c', 'rotational_speed_rpm', 'torque_nm', 'tool_wear_min',
+    'vibration_mm_s', 'pressure_bar', 'verdict'];
+
+  /* --------------------------------------------------------------------------
+     2. 단위 변환 — 결정적 코드. LLM은 이 표를 고를 뿐, 계산에는 손대지 않는다.
+        fwd     : 원본값 → 표준값
+        inv     : 표준값 → 원본값 (③ 왕복 검증용)
+        formula : 화면에 노출할 수식 문자열
+     ------------------------------------------------------------------------ */
+  var UNITS = {
+    degC:     { label: '°C',    of: 'temp', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' °C  (변환 없음)'; } },
+    degF:     { label: '°F',    of: 'temp', fwd: function (v) { return (v - 32) * 5 / 9; },
+                inv: function (v) { return v * 9 / 5 + 32; },
+                formula: function (v) { return '(' + v + ' − 32) × 5/9'; } },
+    kelvin:   { label: 'K',     of: 'temp', fwd: function (v) { return v - 273.15; },
+                inv: function (v) { return v + 273.15; },
+                formula: function (v) { return v + ' − 273.15'; } },
+    degC_x10: { label: '°C×10', of: 'temp', fwd: function (v) { return v / 10; },
+                inv: function (v) { return v * 10; },
+                formula: function (v) { return v + ' ÷ 10'; } },
+    degF_x10: { label: '°F×10', of: 'temp', fwd: function (v) { return (v / 10 - 32) * 5 / 9; },
+                inv: function (v) { return (v * 9 / 5 + 32) * 10; },
+                formula: function (v) { return '(' + v + ' ÷ 10 − 32) × 5/9'; } },
+
+    rpm:      { label: '1/min', of: 'speed', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' 1/min  (변환 없음)'; } },
+    rps:      { label: '1/s',   of: 'speed', fwd: function (v) { return v * 60; },
+                inv: function (v) { return v / 60; },
+                formula: function (v) { return v + ' × 60'; } },
+
+    Nm:       { label: 'N·m',   of: 'torque', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' N·m  (변환 없음)'; } },
+    kgfcm:    { label: 'kgf·cm', of: 'torque', fwd: function (v) { return v * 0.0980665; },
+                inv: function (v) { return v / 0.0980665; },
+                formula: function (v) { return v + ' × 0.0980665'; } },
+
+    min:      { label: 'min',   of: 'time_span', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' min  (변환 없음)'; } },
+    hour:     { label: 'h',     of: 'time_span', fwd: function (v) { return v * 60; },
+                inv: function (v) { return v / 60; },
+                formula: function (v) { return v + ' × 60'; } },
+
+    mm_s:     { label: 'mm/s',  of: 'vib', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' mm/s  (변환 없음)'; } },
+    g_rms:    { label: 'g',     of: 'vib', fwd: function (v) { return v * 9806.65 / (2 * Math.PI * 100); },
+                inv: function (v) { return v * (2 * Math.PI * 100) / 9806.65; },
+                formula: function (v) { return v + ' × 9806.65 ÷ (2π × 100 Hz)'; } },
+
+    bar:      { label: 'bar',   of: 'press', fwd: function (v) { return v; },
+                inv: function (v) { return v; },
+                formula: function (v) { return v + ' bar  (변환 없음)'; } },
+    kPa:      { label: 'kPa',   of: 'press', fwd: function (v) { return v / 100; },
+                inv: function (v) { return v * 100; },
+                formula: function (v) { return v + ' ÷ 100'; } },
+    MPa:      { label: 'MPa',   of: 'press', fwd: function (v) { return v * 10; },
+                inv: function (v) { return v / 10; },
+                formula: function (v) { return v + ' × 10'; } },
+    psi:      { label: 'psi',   of: 'press', fwd: function (v) { return v * 0.0689476; },
+                inv: function (v) { return v / 0.0689476; },
+                formula: function (v) { return v + ' × 0.0689476'; } }
+  };
+
+  /* 표준 필드가 받아들이는 단위 후보군 */
+  var UNIT_POOL = {
+    process_temp_c:       ['degC', 'degF', 'kelvin', 'degC_x10', 'degF_x10'],
+    ambient_temp_c:       ['degC', 'degF', 'kelvin', 'degC_x10', 'degF_x10'],
+    component_temp_c:     ['degC', 'degF', 'kelvin', 'degC_x10', 'degF_x10'],
+    rotational_speed_rpm: ['rpm', 'rps'],
+    torque_nm:            ['Nm', 'kgfcm'],
+    tool_wear_min:        ['min', 'hour'],
+    vibration_mm_s:       ['mm_s', 'g_rms'],
+    pressure_bar:         ['bar', 'kPa', 'MPa', 'psi']
+  };
+
+  function round(v, d) {
+    var p = Math.pow(10, d === undefined ? 2 : d);
+    return Math.round(v * p) / p;
+  }
+
+  /* --------------------------------------------------------------------------
+     3. 시각 파서 — 형식을 판별하고 선언된 타임존으로 UTC 변환
+        타임존은 추측하지 않는다. 선언이 없으면 검증 코드가 경고를 띄운다.
+     ------------------------------------------------------------------------ */
+  var TZ_OFFSET = { 'Asia/Seoul': 9, 'Asia/Tokyo': 9, 'UTC': 0, 'Europe/Berlin': 2, 'America/Chicago': -5 };
+
+  var TIME_FORMATS = [
+    { id: 'iso_local',  re: /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/,
+      label: 'YYYY-MM-DD HH:mm',
+      pick: function (m) { return { y: +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5], s: +(m[6] || 0) }; } },
+    { id: 'iso_utc',    re: /^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2})(?::(\d{2}))?Z$/,
+      label: 'ISO 8601 UTC', utc: true,
+      pick: function (m) { return { y: +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5], s: +(m[6] || 0) }; } },
+    { id: 'us_12h',     re: /^(\d{1,2})\/(\d{1,2})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*([AaPp])\.?[Mm]\.?$/,
+      label: 'MM/DD/YY h:mm AM/PM', ambiguous: 'mdy',
+      pick: function (m) {
+        var h = +m[4] % 12; if (/[Pp]/.test(m[6])) h += 12;
+        return { y: 2000 + +m[3], mo: +m[1], d: +m[2], h: h, mi: +m[5], s: 0 };
+      } },
+    { id: 'eu_12h',     re: /^(\d{1,2})\/(\d{1,2})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*([AaPp])\.?[Mm]\.?$/,
+      label: 'DD/MM/YY h:mm AM/PM', ambiguous: 'dmy',
+      pick: function (m) {
+        var h = +m[4] % 12; if (/[Pp]/.test(m[6])) h += 12;
+        return { y: 2000 + +m[3], mo: +m[2], d: +m[1], h: h, mi: +m[5], s: 0 };
+      } },
+    { id: 'dot_ymd',    re: /^(\d{2})\.\s?(\d{1,2})\.\s?(\d{1,2})\.?\s+(\d{1,2}):(\d{2})$/,
+      label: 'YY.M.D HH:mm',
+      pick: function (m) { return { y: 2000 + +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5], s: 0 }; } },
+    { id: 'epoch_s',    re: /^1[0-9]{9}$/, label: 'Unix epoch (초)', utc: true, epoch: 1000,
+      pick: null },
+    { id: 'epoch_ms',   re: /^1[0-9]{12}$/, label: 'Unix epoch (밀리초)', utc: true, epoch: 1,
+      pick: null }
+  ];
+
+  /* 형식 후보 판별: 전체 행을 훑어 MM/DD vs DD/MM 같은 모호성을 증거로 해소 */
+  function detectTimeFormats(values) {
+    var live = [], i, f, ok, v, m, n = 0;
+    for (i = 0; i < TIME_FORMATS.length; i++) {
+      f = TIME_FORMATS[i]; ok = 0; n = 0;
+      for (var j = 0; j < values.length; j++) {
+        v = String(values[j] || '').trim(); if (!v) continue;
+        n++; if (f.re.test(v)) ok++;
+      }
+      if (n && ok === n) live.push(f);
+    }
+    /* mdy / dmy 동시 매칭 시: 앞 자리에 12 초과가 나오면 그 자리는 '일'이다 */
+    var hasMdy = live.some(function (f) { return f.ambiguous === 'mdy'; });
+    var hasDmy = live.some(function (f) { return f.ambiguous === 'dmy'; });
+    var evidence = null;
+    if (hasMdy && hasDmy) {
+      var firstOver = false, secondOver = false;
+      values.forEach(function (v) {
+        m = /^(\d{1,2})\/(\d{1,2})\//.exec(String(v).trim());
+        if (m) { if (+m[1] > 12) firstOver = true; if (+m[2] > 12) secondOver = true; }
+      });
+      if (firstOver && !secondOver) {
+        live = live.filter(function (f) { return f.ambiguous !== 'mdy'; });
+        evidence = '첫 자리에 12를 넘는 값이 있어 DD/MM로 확정';
+      } else if (secondOver && !firstOver) {
+        live = live.filter(function (f) { return f.ambiguous !== 'dmy'; });
+        evidence = '둘째 자리에 12를 넘는 값이 있어 MM/DD로 확정';
+      } else {
+        evidence = '두 자리 모두 12 이하 — 데이터만으로는 MM/DD와 DD/MM을 가릴 수 없음';
+      }
+    }
+    return { formats: live, evidence: evidence };
+  }
+
+  function parseTime(raw, fmt, tz) {
+    var v = String(raw || '').trim();
+    if (!v) return null;
+    if (fmt.epoch) {
+      var num = Number(v); if (!isFinite(num)) return null;
+      return new Date(num * fmt.epoch);
+    }
+    var m = fmt.re.exec(v); if (!m) return null;
+    var p = fmt.pick(m);
+    var off = fmt.utc ? 0 : (TZ_OFFSET[tz] !== undefined ? TZ_OFFSET[tz] : 0);
+    var t = Date.UTC(p.y, p.mo - 1, p.d, p.h - off, p.mi, p.s);
+    if (isNaN(t)) return null;
+    return new Date(t);
+  }
+
+  function toIsoZ(d) {
+    if (!d) return '';
+    return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  }
+
+  return {
+    SCHEMA: SCHEMA, SCHEMA_ORDER: SCHEMA_ORDER, UNITS: UNITS, UNIT_POOL: UNIT_POOL,
+    TZ_OFFSET: TZ_OFFSET, TIME_FORMATS: TIME_FORMATS,
+    detectTimeFormats: detectTimeFormats, parseTime: parseTime, toIsoZ: toIsoZ, round: round
+  };
+})();
+if (typeof module !== 'undefined') { module.exports = ASKB; }
+
+/* ============================================================================
+   ① 추측 단계 — 의미 가설 제안기
+   ----------------------------------------------------------------------------
+   실제 서비스에서는 이 함수 자리에 LLM 호출이 들어간다. 입력은 (컬럼명, 표본값,
+   설비 설명서 .md)이고 출력은 '가설 + 근거 + 못 정한 것'이다.
+   MVP는 배포 환경에서 키 없이 돌아가야 하므로 동일한 입출력 규약을 갖는
+   규칙 기반 추론기로 대체했다. 중요한 것은 이 단계가 계산을 하지 않는다는 점이다.
+   ========================================================================== */
+
+ASKB.NAME_RULES = [
+  /* 시각 */
+  { field: 'timestamp', p: 0.95, keys: ['시각', '일시', '측정시각', '측정일시', '날짜', 'timestamp', 'time', 'datetime', 'date', 'ts'] },
+  /* 설비 식별 */
+  { field: 'machine_id', p: 0.9, keys: ['설비', '설비명', '호기', '장비', 'machine', 'machineid', 'machine id', 'equipment', 'asset', 'productid', 'product id'] },
+  /* 온도 — 지점이 이름에 박혀 있으면 확신, 없으면 모호 */
+  { field: 'ambient_temp_c', p: 0.94, keys: ['주변온도', '외기온도', '실온', '대기온도', 'air temperature', 'airtemp', 'ambient', 'ambienttemperature', 'room temperature'] },
+  { field: 'process_temp_c', p: 0.92, keys: ['노온도', '노 온도', '공정온도', '내부온도', '가열온도', '열처리온도', 'process temperature', 'processtemp', 'furnace', 'furn_t', 'furnt', 'heat temperature', 'chamber temperature'] },
+  { field: 'component_temp_c', p: 0.9, keys: ['모터온도', '베어링온도', '표면온도', 'motor temperature', 'motortemp', 'bearing temperature', 'surface temperature', 'component temperature'] },
+  { field: '__temp_ambiguous__', p: 0.55, keys: ['온도', 'temperature', 'temp', 'temp1', 'temp2', 't1', 'tmp'] },
+  /* 회전·토크·마모 */
+  { field: 'rotational_speed_rpm', p: 0.93, keys: ['회전속도', '회전수', '스핀들속도', 'rotational speed', 'rotationalspeed', 'rpm', 'spindle speed', 'speed'] },
+  { field: 'torque_nm', p: 0.93, keys: ['토크', 'torque', 'trq'] },
+  { field: 'tool_wear_min', p: 0.92, keys: ['공구마모', '마모', '마모도', 'tool wear', 'toolwear', 'wear'] },
+  /* 진동·압력 */
+  { field: 'vibration_mm_s', p: 0.92, keys: ['진동', 'vibration', 'vib', 'vibrationrms'] },
+  { field: 'pressure_bar', p: 0.92, keys: ['압력', 'pressure', 'press', 'prs'] },
+  /* 판정 — 이름이 명확해도 극성은 별개 문제 */
+  { field: 'verdict', p: 0.9, keys: ['판정', '양불', '양불판정', '품질', '결과', '불량', '불량여부', 'verdict', 'result', 'judgement', 'judgment', 'quality', 'ng', 'defect', 'failure', 'machine failure', 'machinefailure', 'is_failure', 'fault', 'label'] }
 ];
-const PROMPTS=['정반대로 뒤집으면?','사람 대신 기계가 하면?','10배 크게 하면?','10분의 1로 줄이면?',
-  '다른 업계는 어떻게 하나?','아무 제약이 없다면?','제일 게으른 방법은?','돈을 안 쓰면?',
-  '순서를 바꾸면?','합치면? 쪼개면?','없애버리면?','사용자가 직접 하게 하면?'];
-const AXES=[['feas','실현 가능성'],['impact','효과'],['cost','비용 효율'],['urg','시급성']];
-const SRC_TYPES=['사례','데이터','경쟁·유사','사용자','기술','규제·정책','기타'];
-const STATUS=[['todo','대기'],['doing','진행'],['block','막힘'],['done','완료']];
 
-const D=()=>({
-  title:'새 프로젝트',cycle:1,stage:0,
-  goal:{stm:'',crit:[{t:'',tg:''}],cons:'',out:''},
-  research:{qs:[{t:'',done:false}],src:[]},
-  analysis:{probs:[{t:'',whys:['','','','',''],root:'',pri:'중'}]},
-  ideas:[],draft:'',
-  w:{feas:3,impact:5,cost:2,urg:3},sc:{},
-  dec:{pick:[],why:'',drop:[],stm:{what:'',why:'',first:''}},
-  plan:{tasks:[],res:'',ms:[{t:'',d:''}]},
-  rev:{res:{},kpt:{k:'',p:'',t:''},fb:[{t:'',from:''}]},
-  imp:{items:[]},
-  timer:{end:0},
-});
-let S=D(),uid=1;
-const $=i=>document.getElementById(i);
-const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+/* 판정 컬럼 중 '실패/불량'을 세는 이름 vs '정상 여부'를 세는 이름 */
+ASKB.FAIL_SENSE = ['불량', '불량여부', 'ng', 'defect', 'failure', 'machine failure', 'machinefailure', 'is_failure', 'fault', 'fail'];
 
-/* ---------- 타이머 ---------- */
-function tick(){
-  const c=$('clock');
-  if(!S.timer.end){c.textContent='--:--';c.className='cl';return;}
-  const r=Math.round((S.timer.end-Date.now())/1000);
-  if(r<=0){c.textContent='00:00';c.className='cl done';}
-  else{c.textContent=`${String(Math.floor(r/60)).padStart(2,'0')}:${String(r%60).padStart(2,'0')}`;
-       c.className='cl'+(r<=60?' hot':'');}
-}
-setInterval(tick,500);
-document.querySelectorAll('.tb[data-min]').forEach(b=>b.onclick=()=>{S.timer.end=Date.now()+ +b.dataset.min*60000;});
-$('tStop').onclick=()=>{S.timer.end=0;};
-
-/* ---------- 완료 판정 ---------- */
-const score=id=>{const s=S.sc[id];if(!s)return 0;
-  return AXES.reduce((a,[k])=>a+(s[k]||0)*S.w[k],0);};
-const maxScore=()=>AXES.reduce((a,[k])=>a+5*S.w[k],0)||1;
-const filled=[
-  ()=>!!S.goal.stm.trim()&&S.goal.crit.some(c=>c.t.trim()),
-  ()=>S.research.qs.some(q=>q.t.trim())&&S.research.src.length>0,
-  ()=>S.analysis.probs.some(p=>p.t.trim()&&p.root.trim()),
-  ()=>S.ideas.length>=5,
-  ()=>Object.keys(S.sc).length>=Math.min(3,S.ideas.length)&&S.ideas.length>0,
-  ()=>S.dec.pick.length>0&&!!S.dec.why.trim(),
-  ()=>S.plan.tasks.length>0&&S.plan.tasks.every(t=>t.own.trim()),
-  ()=>S.plan.tasks.length>0&&S.plan.tasks.some(t=>t.st==='done'),
-  ()=>Object.keys(S.rev.res).length>0||!!S.rev.kpt.k.trim(),
-  ()=>S.imp.items.length>0,
+/* 헤더에 박힌 단위 힌트 — 표준화에서 가장 값싼 단서 */
+ASKB.HEADER_UNIT_HINTS = [
+  { unit: 'degC_x10', re: /(\*|×|x)\s?10.*(°c|℃|섭씨|celsius)|(°c|℃|섭씨|celsius).*(\*|×|x)\s?10/i, why: '헤더에 섭씨와 10배 스케일이 함께 표기됨' },
+  { unit: 'degF_x10', re: /(\*|×|x)\s?10.*(°f|℉|화씨|fahrenheit)|(°f|℉|화씨|fahrenheit).*(\*|×|x)\s?10/i, why: '헤더에 화씨와 10배 스케일이 함께 표기됨' },
+  { unit: 'kelvin',   re: /\[\s*k\s*\]|\bkelvin\b|켈빈/i, why: '헤더에 켈빈 단위가 표기됨' },
+  { unit: 'degF',     re: /°f|℉|화씨|fahrenheit/i, why: '헤더에 화씨 단위가 표기됨' },
+  { unit: 'degC',     re: /°c|℃|섭씨|celsius/i, why: '헤더에 섭씨 단위가 표기됨' },
+  { unit: 'rpm',      re: /\[\s*rpm\s*\]|\brpm\b|1\/min/i, why: '헤더에 rpm 단위가 표기됨' },
+  { unit: 'Nm',       re: /\[\s*nm\s*\]|n·m|newton\s?met/i, why: '헤더에 N·m 단위가 표기됨' },
+  { unit: 'kgfcm',    re: /kgf\s?·?\s?cm/i, why: '헤더에 kgf·cm 단위가 표기됨' },
+  { unit: 'min',      re: /\[\s*min\s*\]|\(min\)|\bminutes?\b|분\)/i, why: '헤더에 분 단위가 표기됨' },
+  { unit: 'mm_s',     re: /mm\s?\/\s?s/i, why: '헤더에 mm/s 단위가 표기됨' },
+  { unit: 'bar',      re: /\bbar\b/i, why: '헤더에 bar 단위가 표기됨' },
+  { unit: 'kPa',      re: /\bkpa\b/i, why: '헤더에 kPa 단위가 표기됨' },
+  { unit: 'MPa',      re: /\bmpa\b/i, why: '헤더에 MPa 단위가 표기됨' },
+  { unit: 'psi',      re: /\bpsi\b/i, why: '헤더에 psi 단위가 표기됨' }
 ];
 
-/* ---------- 렌더 ---------- */
-function render(){
-  $('pTitle').value=S.title;$('cyc').textContent='CYCLE '+S.cycle;
-  let last='';
-  $('nav').innerHTML=STAGES.map((s,i)=>{
-    const grp=(s.g!==last)?`<div class="nvgrp">${s.g}</div>`:'';last=s.g;
-    return grp+`<button class="nv ${i===S.stage?'on':''}" data-s="${i}">
-      <span class="nn">${s.n}</span>${s.t}<span class="dt ${filled[i]()?'f':''}"></span></button>`;
-  }).join('');
-  document.querySelectorAll('.nv').forEach(b=>b.onclick=()=>{S.stage=+b.dataset.s;render();window.scrollTo(0,0);});
-  const st=STAGES[S.stage];
-  $('main').innerHTML=`<div class="ph"><span class="k">Stage ${st.n} · ${st.g}</span><h1>${st.t}</h1>
-    <div class="s">${st.s}</div></div>
-    <div class="hint"><span class="k">짚어둘 것</span>${st.h}</div>
-    ${[V1,V2,V3,V4,V5,V6,V7,V8,V9,V10][S.stage]()}
-    <div class="nav2">
-      ${S.stage>0?'<button class="btn gh" id="prev">← 이전 단계</button>':''}
-      ${S.stage<9?'<button class="btn ac" id="next">다음 단계 →</button>':''}
-    </div>`;
-  const p=$('prev'),n=$('next');
-  if(p)p.onclick=()=>{S.stage--;render();window.scrollTo(0,0);};
-  if(n)n.onclick=()=>{S.stage++;render();window.scrollTo(0,0);};
-  bind();
-  $('stat').textContent=`아이디어 ${S.ideas.length} · 평가 ${Object.keys(S.sc).length} · 작업 ${S.plan.tasks.length}`
-    +` · 완료 ${S.plan.tasks.filter(t=>t.st==='done').length} · 단계 ${filled.filter(f=>f()).length}/10`;
-}
-
-/* ===== 01 목표 ===== */
-function V1(){return `
-<div class="card"><div class="ch"><h3>목표 한 문장</h3></div>
-  <textarea data-p="goal.stm" rows="2" placeholder="예: 3주 안에 신규 사용자 이탈 원인을 찾아내고 첫 주 잔존율을 40%에서 55%로 올린다">${esc(S.goal.stm)}</textarea>
-  <div class="tiny">끝났는지 아닌지를 판별할 수 있는 문장인가? 아니면 다시 쓰세요.</div></div>
-<div class="card"><div class="ch"><h3>성공 기준</h3><span class="bd">9단계에서 이 표로 검토합니다</span></div>
-  ${S.goal.crit.map((c,i)=>`<div class="row"><span class="no">${i+1}</span>
-    <input data-crit="${i}.t" value="${esc(c.t)}" placeholder="측정할 것 (예: 첫 주 잔존율)">
-    <input data-crit="${i}.tg" value="${esc(c.tg)}" placeholder="목표값 (예: 55%)" style="flex:0 0 160px">
-    <button class="x" data-rmcrit="${i}">×</button></div>`).join('')}
-  <button class="btn gh sm" id="addCrit">기준 추가</button></div>
-<div class="g2">
-  <div class="card"><div class="ch"><h3>제약 조건</h3></div>
-    <textarea data-p="goal.cons" rows="4" placeholder="기한, 예산, 인력, 기술적 제약, 반드시 지켜야 할 것">${esc(S.goal.cons)}</textarea></div>
-  <div class="card at"><div class="ch"><h3>범위 밖 — 안 할 것</h3></div>
-    <textarea data-p="goal.out" rows="4" placeholder="이번에 손대지 않을 것. 여기 적힌 건 나중에 누가 제안해도 거절한다">${esc(S.goal.out)}</textarea></div>
-</div>`;}
-
-/* ===== 02 조사 ===== */
-function V2(){
-  const qd=S.research.qs.filter(q=>q.t.trim()&&q.done).length,qt=S.research.qs.filter(q=>q.t.trim()).length;
-  return `
-<div class="card"><div class="ch"><h3>알아내야 할 질문</h3>
-  <span class="bd ${qt&&qd===qt?'g':'a'}">${qd} / ${qt} 해결</span></div>
-  ${S.research.qs.map((q,i)=>`<div class="row">
-    <label class="ck ${q.done?'on':''}" data-qd="${i}" style="flex:0 0 auto;padding:8px 0;border:none">
-      <span class="b">${q.done?'✓':''}</span></label>
-    <input data-q="${i}" value="${esc(q.t)}" placeholder="예: 이탈하는 사용자는 어느 화면에서 떠나는가?">
-    <button class="x" data-rmq="${i}">×</button></div>`).join('')}
-  <button class="btn gh sm" id="addQ">질문 추가</button>
-  <div class="tiny">질문 없이 자료를 모으면 읽기만 하다 끝납니다. 질문을 먼저 채우세요.</div></div>
-<div class="card"><div class="ch"><h3>수집한 자료</h3><span class="bd">${S.research.src.length}건</span></div>
-  ${S.research.src.length?S.research.src.map((s,i)=>`
-    <div class="card" style="margin-bottom:9px;padding:12px">
-      <div class="row" style="margin-bottom:8px">
-        <input data-src="${i}.t" value="${esc(s.t)}" placeholder="제목">
-        <select data-src="${i}.k" style="flex:0 0 120px">${SRC_TYPES.map(t=>`<option ${s.k===t?'selected':''}>${t}</option>`).join('')}</select>
-        <button class="x" data-rmsrc="${i}">×</button></div>
-      <div class="fd"><input data-src="${i}.u" value="${esc(s.u)}" placeholder="출처 · 링크"></div>
-      <textarea data-src="${i}.s" rows="2" placeholder="핵심 내용 한두 줄. 나중에 이것만 읽습니다">${esc(s.s)}</textarea>
-    </div>`).join(''):'<div class="tiny">아직 자료가 없습니다.</div>'}
-  <button class="btn gh sm" id="addSrc">자료 추가</button></div>`;
-}
-
-/* ===== 03 분석 ===== */
-function V3(){return `
-${S.analysis.probs.map((p,i)=>`
-<div class="card"><div class="ch"><h3>문제 ${i+1}</h3>
-  <select data-pri="${i}" style="flex:0 0 96px;font-size:12px;padding:5px 8px">
-    ${['상','중','하'].map(v=>`<option ${p.pri===v?'selected':''}>${v}</option>`).join('')}</select>
-  ${S.analysis.probs.length>1?`<button class="x" data-rmprob="${i}" style="margin-left:auto">×</button>`:''}</div>
-  <div class="fd"><input data-prob="${i}.t" value="${esc(p.t)}" placeholder="관찰된 문제 (증상)"></div>
-  <label class="fl">왜? — 다섯 번 파고들기</label>
-  ${p.whys.map((w,j)=>`<div class="row"><span class="no">${j+1}</span>
-    <input data-why="${i}.${j}" value="${esc(w)}" placeholder="${j===0?'왜 그런 문제가 생기나?':'그건 또 왜?'}"></div>`).join('')}
-  <div class="fd" style="margin-top:10px"><label class="fl">근본 원인 — 여기가 손댈 지점</label>
-    <textarea data-prob="${i}.root" rows="2" placeholder="다섯 번 물어서 도달한 구조적 원인">${esc(p.root)}</textarea></div>
-</div>`).join('')}
-<button class="btn gh sm" id="addProb">문제 추가</button>`;}
-
-/* ===== 04 발산 ===== */
-function V4(){
-  const roots=S.analysis.probs.filter(p=>p.root.trim());
-  return `
-${roots.length?`<div class="card ac"><div class="ch"><h3>3단계에서 나온 근본 원인</h3></div>
-  ${roots.map(p=>`<div style="font-size:13.5px;margin:4px 0">· ${esc(p.root)}</div>`).join('')}
-  <div class="tiny">이것들을 겨냥해서 발산하세요.</div></div>`:''}
-<div class="card"><div class="ch"><h3>아이디어 추가</h3><span class="bd">Ctrl+Enter</span></div>
-  <textarea id="dTx" rows="2" placeholder="해결책 · 접근 방법 · 실험해볼 것 아무거나">${esc(S.draft)}</textarea>
-  <div class="br" style="margin-top:10px"><button class="btn ac" id="addIdea">추가</button></div>
-  <label class="fl" style="margin-top:14px">막히면 이 프롬프트를 눌러보세요</label>
-  <div class="cps">${PROMPTS.map(p=>`<button class="cp" data-pr="${esc(p)}">${p}</button>`).join('')}</div></div>
-<div class="card" style="padding:12px 16px"><div style="font-family:var(--mono);font-size:12px;color:var(--mute)">
-  수집 <b style="color:var(--ink)">${S.ideas.length}</b>개 ${S.ideas.length>=20?'· 충분합니다':`· 20개까지 ${Math.max(0,20-S.ideas.length)}개`}</div></div>
-<div class="ids">${S.ideas.map(x=>`<div class="id"><button class="x" data-rmid="${x.id}">×</button>
-  <div class="t">${esc(x.t)}</div>${x.f?`<div class="f">${esc(x.f)}</div>`:''}</div>`).join('')}</div>`;
-}
-
-/* ===== 05 평가 ===== */
-function V5(){
-  if(!S.ideas.length)return '<div class="card at">아이디어가 없습니다. 4단계로 돌아가세요.</div>';
-  const sorted=[...S.ideas].sort((a,b)=>score(b.id)-score(a.id));
-  const mxv=maxScore();
-  return `
-<div class="card"><div class="ch"><h3>가중치</h3><span class="bd">먼저 정하세요</span></div>
-  <div class="g2">${AXES.map(([k,l])=>`<div class="sl">
-    <div class="l"><span>${l}</span><b>×${S.w[k]}</b></div>
-    <input type="range" data-w="${k}" min="1" max="5" step="1" value="${S.w[k]}"></div>`).join('')}</div></div>
-${sorted.map(x=>{const s=S.sc[x.id]||{};const v=score(x.id);
-  return `<div class="ev"><div class="h"><div class="t">${esc(x.t)}</div>
-    <span class="sc">${v} / ${mxv}</span></div>
-    <div class="b">${AXES.map(([k,l])=>`<div class="sl">
-      <div class="l"><span>${l}</span><b>${s[k]||0}</b></div>
-      <input type="range" data-sc="${x.id}|${k}" min="0" max="5" step="1" value="${s[k]||0}"></div>`).join('')}</div></div>`;}).join('')}
-<div class="card"><div class="ch"><h3>효과 × 실현 가능성</h3><span class="bd">우측 상단이 먼저</span></div>
-  <div class="mx"><div class="ax v"></div><div class="ax h"></div>
-    <div class="q" style="right:10px;top:8px">먼저 할 것</div>
-    <div class="q" style="left:10px;top:8px">크게 걸어야 함</div>
-    <div class="q" style="right:10px;bottom:22px">쉬운 보너스</div>
-    <div class="q" style="left:10px;bottom:22px">버릴 것</div>
-    <div class="lb" style="left:8px;bottom:6px">실현 가능성 →</div>
-    <div class="lb" style="left:8px;top:50%;transform:rotate(-90deg) translateX(-100%);transform-origin:left top">효과 →</div>
-    ${S.ideas.map(x=>{const s=S.sc[x.id];if(!s||(!s.feas&&!s.impact))return '';
-      return `<div class="pt" style="left:${8+(s.feas||0)/5*84}%;bottom:${8+(s.impact||0)/5*80}%">
-        <span>${esc(x.t.slice(0,26))}${x.t.length>26?'…':''}</span></div>`;}).join('')}
-  </div></div>`;
-}
-
-/* ===== 06 선정 ===== */
-function V6(){
-  const sorted=[...S.ideas].sort((a,b)=>score(b.id)-score(a.id));
-  if(!sorted.length)return '<div class="card at">아이디어가 없습니다.</div>';
-  return `
-<div class="card"><div class="ch"><h3>실행할 것 선택</h3><span class="bd">복수 선택 가능</span></div>
-  ${sorted.map(x=>`<label class="ck ${S.dec.pick.includes(x.id)?'on':''}" data-pk="${x.id}">
-    <span class="b">${S.dec.pick.includes(x.id)?'✓':''}</span>
-    <span class="l">${esc(x.t)} <span style="font-family:var(--mono);font-size:11px;color:var(--faint)">${score(x.id)}</span></span></label>`).join('')}</div>
-<div class="card"><div class="ch"><h3>선택 근거</h3></div>
-  <textarea data-p="dec.why" rows="3" placeholder="왜 이걸 골랐나. 점수 말고 판단을 쓰세요">${esc(S.dec.why)}</textarea></div>
-<div class="card at"><div class="ch"><h3>버린 것과 이유</h3><span class="bd">나중에 반드시 물어봅니다</span></div>
-  ${sorted.filter(x=>!S.dec.pick.includes(x.id)).map(x=>{
-    const d=S.dec.drop.find(d=>d.id===x.id)||{r:''};
-    return `<div class="row"><input value="${esc(x.t)}" readonly style="background:#faf8f4;color:var(--mute)">
-      <input data-drop="${x.id}" value="${esc(d.r)}" placeholder="버린 이유"></div>`;}).join('')||'<div class="tiny">아직 선택하지 않았습니다.</div>'}</div>
-<div class="card"><div class="ch"><h3>확정 문장</h3></div>
-  <div class="g3">
-    <div class="fd"><label class="fl">무엇을 한다</label><input data-p="dec.stm.what" value="${esc(S.dec.stm.what)}" placeholder="온보딩 3단계를 1단계로 줄인다"></div>
-    <div class="fd"><label class="fl">왜냐하면</label><input data-p="dec.stm.why" value="${esc(S.dec.stm.why)}" placeholder="이탈이 2단계에서 집중되므로"></div>
-    <div class="fd"><label class="fl">첫 작업은</label><input data-p="dec.stm.first" value="${esc(S.dec.stm.first)}" placeholder="현재 퍼널 데이터 추출"></div>
-  </div>
-  <div class="sent"><b>${esc(S.dec.stm.what)||'<span class="p">[무엇을]</span>'}</b>한다.
-    ${esc(S.dec.stm.why)||'<span class="p">[왜냐하면]</span>'}.<br>
-    첫 작업은 <b>${esc(S.dec.stm.first)||'<span class="p">[무엇]</span>'}</b>이다.</div></div>`;
-}
-
-/* ===== 07 계획 ===== */
-function V7(){
-  const names=[...new Set(S.plan.tasks.map(t=>t.own.trim()).filter(Boolean))];
-  const noOwn=S.plan.tasks.filter(t=>!t.own.trim()).length;
-  return `
-${S.dec.stm.what?`<div class="card ac"><b>${esc(S.dec.stm.what)}</b>${S.dec.stm.first?` — 첫 작업: ${esc(S.dec.stm.first)}`:''}</div>`:''}
-<div class="card"><div class="ch"><h3>세부 작업</h3>
-  <span class="bd ${noOwn?'a':'g'}">${noOwn?`담당 미정 ${noOwn}건`:'담당 전원 배정'}</span></div>
-  ${S.plan.tasks.length?`<div class="tk" style="font-family:var(--mono);font-size:10px;color:var(--mute);font-weight:700">
-    <span>작업</span><span>담당</span><span>기한</span><span>상태</span><span></span></div>`:''}
-  ${S.plan.tasks.map((t,i)=>`<div class="tk">
-    <input data-tk="${i}.n" value="${esc(t.n)}" placeholder="반나절 안에 끝낼 단위로" class="st-${t.st}">
-    <input data-tk="${i}.own" value="${esc(t.own)}" placeholder="담당">
-    <input data-tk="${i}.due" value="${esc(t.due)}" placeholder="기한">
-    <select data-tk="${i}.st">${STATUS.map(([v,l])=>`<option value="${v}" ${t.st===v?'selected':''}>${l}</option>`).join('')}</select>
-    <button class="x" data-rmtk="${i}">×</button></div>`).join('')}
-  <button class="btn gh sm" id="addTk" style="margin-top:6px">작업 추가</button>
-  ${noOwn?'<div class="tiny" style="color:var(--at);font-weight:700">담당자가 비어 있는 작업은 아무도 하지 않습니다.</div>':''}</div>
-<div class="g2">
-  <div class="card"><div class="ch"><h3>필요한 자원</h3></div>
-    <textarea data-p="plan.res" rows="4" placeholder="예산, 도구, 계정, 데이터 접근권, 외부 협력">${esc(S.plan.res)}</textarea></div>
-  <div class="card"><div class="ch"><h3>마일스톤</h3></div>
-    ${S.plan.ms.map((m,i)=>`<div class="row">
-      <input data-ms="${i}.t" value="${esc(m.t)}" placeholder="무엇이 끝나면">
-      <input data-ms="${i}.d" value="${esc(m.d)}" placeholder="언제" style="flex:0 0 120px">
-      <button class="x" data-rmms="${i}">×</button></div>`).join('')}
-    <button class="btn gh sm" id="addMs">추가</button></div>
-</div>`;
-}
-
-/* ===== 08 실행 ===== */
-function V8(){
-  const T=S.plan.tasks;
-  if(!T.length)return '<div class="card at">작업이 없습니다. 7단계에서 먼저 정의하세요.</div>';
-  const done=T.filter(t=>t.st==='done').length,blk=T.filter(t=>t.st==='block');
-  return `
-<div class="card"><div class="ch"><h3>진행률</h3><span class="bd ${done===T.length?'g':''}">${done} / ${T.length}</span></div>
-  <div class="bar"><i style="width:${done/T.length*100}%"></i></div>
-  <div class="tiny">${done===T.length?'전부 완료됐습니다. 9단계로 넘어가세요.':`남은 작업 ${T.length-done}건`}</div></div>
-${blk.length?`<div class="card at"><div class="ch"><h3>막힌 작업 ${blk.length}건</h3></div>
-  ${blk.map(t=>`<div style="font-size:13.5px;margin:3px 0">· ${esc(t.n)} ${t.own?`(${esc(t.own)})`:''}</div>`).join('')}
-  <div class="tiny">막힌 작업이 이틀 이상 머물면 계획이 틀린 겁니다. 7단계로 돌아가 쪼개세요.</div></div>`:''}
-<div class="board">${STATUS.map(([v,l])=>`
-  <div class="col"><div class="cn"><span>${l}</span><span>${T.filter(t=>t.st===v).length}</span></div>
-    ${T.map((t,i)=>t.st!==v?'':`<div class="tc">${esc(t.n)||'(제목 없음)'}
-      <div class="m">${esc(t.own)||'담당 미정'}${t.due?` · ${esc(t.due)}`:''}</div>
-      <div class="mv">${STATUS.filter(([v2])=>v2!==v).map(([v2,l2])=>
-        `<button data-mv="${i}|${v2}">${l2}</button>`).join('')}</div></div>`).join('')}
-  </div>`).join('')}</div>`;
-}
-
-/* ===== 09 검토 ===== */
-function V9(){
-  const C=S.goal.crit.filter(c=>c.t.trim());
-  return `
-<div class="card"><div class="ch"><h3>성공 기준 대조</h3><span class="bd">1단계에서 자동으로 올라옵니다</span></div>
-  ${C.length?`<div class="rv" style="font-family:var(--mono);font-size:10px;color:var(--mute);font-weight:700">
-    <span>기준 · 목표</span><span>실제 결과</span><span>달성</span></div>
-  ${C.map((c,i)=>{const r=S.rev.res[i]||{a:'',m:''};
-    return `<div class="rv">
-      <input value="${esc(c.t)}${c.tg?` → ${esc(c.tg)}`:''}" readonly style="background:#faf8f4;color:var(--ink2)">
-      <input data-rv="${i}.a" value="${esc(r.a)}" placeholder="실제">
-      <div class="tog"><button class="y ${r.m==='y'?'on':''}" data-rvm="${i}|y">달성</button>
-        <button class="n ${r.m==='n'?'on':''}" data-rvm="${i}|n">미달</button></div></div>`;}).join('')}`
-  :'<div class="tiny">1단계에 성공 기준이 없습니다. 기준 없이는 검토가 감상이 됩니다.</div>'}</div>
-<div class="g3">
-  ${[['k','계속할 것','잘 작동했던 것'],['p','문제였던 것','막혔거나 낭비였던 것'],['t','다음에 시도할 것','바꿔볼 것']]
-    .map(([k,l,ph])=>`<div class="card"><div class="ch"><h3>${l}</h3></div>
-      <textarea data-p="rev.kpt.${k}" rows="5" placeholder="${ph}">${esc(S.rev.kpt[k])}</textarea></div>`).join('')}
-</div>
-<div class="card"><div class="ch"><h3>받은 피드백</h3></div>
-  ${S.rev.fb.map((f,i)=>`<div class="row">
-    <input data-fb="${i}.t" value="${esc(f.t)}" placeholder="피드백 내용">
-    <input data-fb="${i}.from" value="${esc(f.from)}" placeholder="누구에게서" style="flex:0 0 140px">
-    <button class="x" data-rmfb="${i}">×</button></div>`).join('')}
-  <button class="btn gh sm" id="addFb">추가</button></div>`;
-}
-
-/* ===== 10 개선 ===== */
-function V10(){return `
-<div class="card"><div class="ch"><h3>개선 항목</h3><span class="bd">되돌아갈 단계를 반드시 지정</span></div>
-  ${S.imp.items.length?S.imp.items.map((it,i)=>`<div class="card" style="margin-bottom:9px;padding:12px">
-    <div class="row" style="margin-bottom:8px"><input data-imp="${i}.t" value="${esc(it.t)}" placeholder="무엇을 개선할 것인가">
-      <button class="x" data-rmimp="${i}">×</button></div>
-    <div class="g2">
-      <div><label class="fl">구체적 조치</label><input data-imp="${i}.a" value="${esc(it.a)}" placeholder="어떻게 바꾼다"></div>
-      <div><label class="fl">되돌아갈 단계</label>
-        <select data-imp="${i}.g">${STAGES.map((s,j)=>`<option value="${j}" ${String(it.g)===String(j)?'selected':''}>${s.n} ${s.t}</option>`).join('')}</select></div>
-    </div></div>`).join(''):'<div class="tiny">아직 없습니다.</div>'}
-  <button class="btn gh sm" id="addImp">항목 추가</button></div>
-<div class="card ok"><div class="ch"><h3>다음 사이클</h3><span class="bd g">CYCLE ${S.cycle} → ${S.cycle+1}</span></div>
-  <div style="font-size:13.5px;line-height:1.65">사이클을 넘기면 <b>목표·조사·분석·아이디어·평가·선정은 그대로 남고</b>,
-  실행 상태와 검토 내용만 비워집니다. 개선 항목은 다음 사이클의 출발점으로 이어집니다.</div>
-  <div class="br" style="margin-top:12px">
-    <button class="btn ok" id="nextCycle">다음 사이클 시작</button>
-    <button class="btn gh" id="resetAll">전부 초기화</button></div></div>`;}
-
-/* ---------- 바인딩 ---------- */
-function setPath(p,v){const k=p.split('.');let o=S;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=v;}
-function bind(){
-  document.querySelectorAll('[data-p]').forEach(e=>e.oninput=ev=>{setPath(e.dataset.p,ev.target.value);
-    if(e.dataset.p.startsWith('dec.stm'))render();});
-
-  // 01
-  document.querySelectorAll('[data-crit]').forEach(e=>e.oninput=ev=>{
-    const [i,f]=e.dataset.crit.split('.');S.goal.crit[+i][f]=ev.target.value;});
-  const ac=$('addCrit');if(ac)ac.onclick=()=>{S.goal.crit.push({t:'',tg:''});render();};
-  document.querySelectorAll('[data-rmcrit]').forEach(b=>b.onclick=()=>{
-    S.goal.crit.splice(+b.dataset.rmcrit,1);if(!S.goal.crit.length)S.goal.crit=[{t:'',tg:''}];render();});
-
-  // 02
-  document.querySelectorAll('[data-q]').forEach(e=>e.oninput=ev=>{S.research.qs[+e.dataset.q].t=ev.target.value;});
-  document.querySelectorAll('[data-qd]').forEach(l=>l.onclick=()=>{
-    const q=S.research.qs[+l.dataset.qd];q.done=!q.done;render();});
-  document.querySelectorAll('[data-rmq]').forEach(b=>b.onclick=()=>{
-    S.research.qs.splice(+b.dataset.rmq,1);if(!S.research.qs.length)S.research.qs=[{t:'',done:false}];render();});
-  const aq=$('addQ');if(aq)aq.onclick=()=>{S.research.qs.push({t:'',done:false});render();};
-  document.querySelectorAll('[data-src]').forEach(e=>{const h=ev=>{
-    const [i,f]=e.dataset.src.split('.');S.research.src[+i][f]=ev.target.value;};
-    e.oninput=h;e.onchange=h;});
-  document.querySelectorAll('[data-rmsrc]').forEach(b=>b.onclick=()=>{S.research.src.splice(+b.dataset.rmsrc,1);render();});
-  const as=$('addSrc');if(as)as.onclick=()=>{S.research.src.push({t:'',k:'사례',u:'',s:''});render();};
-
-  // 03
-  document.querySelectorAll('[data-prob]').forEach(e=>e.oninput=ev=>{
-    const [i,f]=e.dataset.prob.split('.');S.analysis.probs[+i][f]=ev.target.value;});
-  document.querySelectorAll('[data-why]').forEach(e=>e.oninput=ev=>{
-    const [i,j]=e.dataset.why.split('.');S.analysis.probs[+i].whys[+j]=ev.target.value;});
-  document.querySelectorAll('[data-pri]').forEach(e=>e.onchange=ev=>{S.analysis.probs[+e.dataset.pri].pri=ev.target.value;});
-  document.querySelectorAll('[data-rmprob]').forEach(b=>b.onclick=()=>{S.analysis.probs.splice(+b.dataset.rmprob,1);render();});
-  const ap=$('addProb');if(ap)ap.onclick=()=>{S.analysis.probs.push({t:'',whys:['','','','',''],root:'',pri:'중'});render();};
-
-  // 04
-  const dt=$('dTx');
-  if(dt){dt.oninput=e=>{S.draft=e.target.value;};
-    dt.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')addIdea();};}
-  const ai=$('addIdea');if(ai)ai.onclick=addIdea;
-  document.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{
-    const t=$('dTx');S.draft=(S.draft?S.draft+' ':'')+`[${b.dataset.pr}] `;t.value=S.draft;t.focus();});
-  document.querySelectorAll('[data-rmid]').forEach(b=>b.onclick=()=>{
-    S.ideas=S.ideas.filter(x=>x.id!=b.dataset.rmid);delete S.sc[b.dataset.rmid];
-    S.dec.pick=S.dec.pick.filter(i=>i!=b.dataset.rmid);render();});
-
-  // 05
-  document.querySelectorAll('[data-w]').forEach(e=>e.oninput=ev=>{S.w[e.dataset.w]=+ev.target.value;render();});
-  document.querySelectorAll('[data-sc]').forEach(e=>e.oninput=ev=>{
-    const [id,k]=e.dataset.sc.split('|');S.sc[id]=S.sc[id]||{};S.sc[id][k]=+ev.target.value;render();});
-
-  // 06
-  document.querySelectorAll('[data-pk]').forEach(l=>l.onclick=()=>{
-    const id=l.dataset.pk;
-    S.dec.pick=S.dec.pick.includes(id)?S.dec.pick.filter(x=>x!==id):[...S.dec.pick,id];render();});
-  document.querySelectorAll('[data-drop]').forEach(e=>e.oninput=ev=>{
-    const id=e.dataset.drop,f=S.dec.drop.find(d=>d.id===id);
-    if(f)f.r=ev.target.value;else S.dec.drop.push({id,r:ev.target.value});});
-
-  // 07
-  document.querySelectorAll('[data-tk]').forEach(e=>{const h=ev=>{
-    const [i,f]=e.dataset.tk.split('.');S.plan.tasks[+i][f]=ev.target.value;
-    if(f==='st')render();};e.oninput=h;e.onchange=h;});
-  document.querySelectorAll('[data-rmtk]').forEach(b=>b.onclick=()=>{S.plan.tasks.splice(+b.dataset.rmtk,1);render();});
-  const at=$('addTk');if(at)at.onclick=()=>{S.plan.tasks.push({n:'',own:'',due:'',st:'todo'});render();};
-  document.querySelectorAll('[data-ms]').forEach(e=>e.oninput=ev=>{
-    const [i,f]=e.dataset.ms.split('.');S.plan.ms[+i][f]=ev.target.value;});
-  document.querySelectorAll('[data-rmms]').forEach(b=>b.onclick=()=>{
-    S.plan.ms.splice(+b.dataset.rmms,1);if(!S.plan.ms.length)S.plan.ms=[{t:'',d:''}];render();});
-  const am=$('addMs');if(am)am.onclick=()=>{S.plan.ms.push({t:'',d:''});render();};
-
-  // 08
-  document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{
-    const [i,v]=b.dataset.mv.split('|');S.plan.tasks[+i].st=v;render();});
-
-  // 09
-  document.querySelectorAll('[data-rv]').forEach(e=>e.oninput=ev=>{
-    const [i,f]=e.dataset.rv.split('.');S.rev.res[i]=S.rev.res[i]||{a:'',m:''};S.rev.res[i][f]=ev.target.value;});
-  document.querySelectorAll('[data-rvm]').forEach(b=>b.onclick=()=>{
-    const [i,v]=b.dataset.rvm.split('|');S.rev.res[i]=S.rev.res[i]||{a:'',m:''};
-    S.rev.res[i].m=S.rev.res[i].m===v?'':v;render();});
-  document.querySelectorAll('[data-fb]').forEach(e=>e.oninput=ev=>{
-    const [i,f]=e.dataset.fb.split('.');S.rev.fb[+i][f]=ev.target.value;});
-  document.querySelectorAll('[data-rmfb]').forEach(b=>b.onclick=()=>{
-    S.rev.fb.splice(+b.dataset.rmfb,1);if(!S.rev.fb.length)S.rev.fb=[{t:'',from:''}];render();});
-  const af=$('addFb');if(af)af.onclick=()=>{S.rev.fb.push({t:'',from:''});render();};
-
-  // 10
-  document.querySelectorAll('[data-imp]').forEach(e=>{const h=ev=>{
-    const [i,f]=e.dataset.imp.split('.');S.imp.items[+i][f]=ev.target.value;};e.oninput=h;e.onchange=h;});
-  document.querySelectorAll('[data-rmimp]').forEach(b=>b.onclick=()=>{S.imp.items.splice(+b.dataset.rmimp,1);render();});
-  const aim=$('addImp');if(aim)aim.onclick=()=>{S.imp.items.push({t:'',a:'',g:'7'});render();};
-  const nc=$('nextCycle');if(nc)nc.onclick=()=>{
-    if(!confirm(`CYCLE ${S.cycle+1}을 시작합니다.\n실행 상태와 검토 내용이 초기화됩니다. 계속할까요?`))return;
-    S.cycle++;S.plan.tasks.forEach(t=>t.st='todo');
-    S.rev={res:{},kpt:{k:'',p:'',t:''},fb:[{t:'',from:''}]};
-    const back=S.imp.items.length?Math.min(...S.imp.items.map(i=>+i.g||6)):6;
-    S.stage=back;render();window.scrollTo(0,0);};
-  const ra=$('resetAll');if(ra)ra.onclick=()=>{
-    if(confirm('모든 내용을 지웁니다. 계속할까요?')){S=D();uid=1;render();}};
-}
-function addIdea(){
-  const t=S.draft.trim();if(!t)return;
-  S.ideas.push({id:String(uid++),t,f:''});S.draft='';render();
-  const d=$('dTx');if(d)d.focus();
-}
-$('pTitle').oninput=e=>{S.title=e.target.value;};
-
-/* ---------- 저장 / 문서 ---------- */
-function dl(n,t,ty){const b=new Blob([t],{type:ty||'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-$('bSave').onclick=()=>dl((S.title||'plan').replace(/[^\w가-힣-]/g,'_')+'.json',JSON.stringify({...S,uid},null,1),'application/json');
-$('bLoad').onclick=()=>$('fIn').click();
-$('fIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;
-  try{const j=JSON.parse(await f.text());S=Object.assign(D(),j);uid=j.uid||S.ideas.length+1;render();}
-  catch(err){alert('불러오기 실패: '+err.message);}e.target.value='';};
-$('bExport').onclick=()=>{
-  const C=S.goal.crit.filter(c=>c.t.trim());
-  const md=`# ${S.title} · CYCLE ${S.cycle}
-
-## 1. 목표
-${S.goal.stm||'(미작성)'}
-
-### 성공 기준
-${C.length?C.map((c,i)=>{const r=S.rev.res[i]||{};
-  return `- ${c.t}${c.tg?` → 목표 ${c.tg}`:''}${r.a?` / 실제 ${r.a}`:''}${r.m?` [${r.m==='y'?'달성':'미달'}]`:''}`;}).join('\n'):'- (없음)'}
-
-### 제약
-${S.goal.cons||'(없음)'}
-
-### 범위 밖
-${S.goal.out||'(없음)'}
-
-## 2. 조사
-### 알아내야 할 질문
-${S.research.qs.filter(q=>q.t.trim()).map(q=>`- [${q.done?'x':' '}] ${q.t}`).join('\n')||'- (없음)'}
-
-### 자료
-${S.research.src.map(s=>`- (${s.k}) ${s.t}${s.u?` — ${s.u}`:''}${s.s?`\n  ${s.s}`:''}`).join('\n')||'- (없음)'}
-
-## 3. 문제 분석
-${S.analysis.probs.filter(p=>p.t.trim()).map(p=>
-`### ${p.t} [우선도 ${p.pri}]
-${p.whys.filter(w=>w.trim()).map((w,i)=>`${i+1}. 왜? ${w}`).join('\n')||'(미작성)'}
-**근본 원인:** ${p.root||'(미작성)'}`).join('\n\n')||'(없음)'}
-
-## 4~5. 아이디어와 평가
-가중치 — ${AXES.map(([k,l])=>`${l} ×${S.w[k]}`).join(' / ')}
-
-${[...S.ideas].sort((a,b)=>score(b.id)-score(a.id)).map(x=>{const s=S.sc[x.id]||{};
-  return `- **${x.t}** · ${score(x.id)}/${maxScore()} (${AXES.map(([k,l])=>`${l} ${s[k]||0}`).join(', ')})`;}).join('\n')||'- (없음)'}
-
-## 6. 방향
-${S.dec.stm.what?`**${S.dec.stm.what}**한다. ${S.dec.stm.why}.
-첫 작업은 ${S.dec.stm.first}이다.`:'(미확정)'}
-
-### 선택
-${S.dec.pick.map(id=>{const x=S.ideas.find(i=>i.id===id);return x?`- ${x.t}`:'';}).filter(Boolean).join('\n')||'- (없음)'}
-
-### 근거
-${S.dec.why||'(미작성)'}
-
-### 버린 것
-${S.dec.drop.filter(d=>d.r.trim()).map(d=>{const x=S.ideas.find(i=>i.id===d.id);
-  return x?`- ${x.t} — ${d.r}`:'';}).filter(Boolean).join('\n')||'- (없음)'}
-
-## 7~8. 계획과 실행
-${S.plan.tasks.map(t=>`- [${t.st==='done'?'x':' '}] ${t.n||'(제목 없음)'} · ${t.own||'담당 미정'}${t.due?` · ${t.due}`:''}${t.st==='block'?' **[막힘]**':''}`).join('\n')||'- (없음)'}
-
-진행 ${S.plan.tasks.filter(t=>t.st==='done').length}/${S.plan.tasks.length}
-
-### 자원
-${S.plan.res||'(없음)'}
-
-### 마일스톤
-${S.plan.ms.filter(m=>m.t.trim()).map(m=>`- ${m.t}${m.d?` · ${m.d}`:''}`).join('\n')||'- (없음)'}
-
-## 9. 검토
-- **계속할 것:** ${S.rev.kpt.k||'(미작성)'}
-- **문제였던 것:** ${S.rev.kpt.p||'(미작성)'}
-- **다음에 시도할 것:** ${S.rev.kpt.t||'(미작성)'}
-
-### 피드백
-${S.rev.fb.filter(f=>f.t.trim()).map(f=>`- ${f.t}${f.from?` (${f.from})`:''}`).join('\n')||'- (없음)'}
-
-## 10. 개선
-${S.imp.items.filter(i=>i.t.trim()).map(i=>`- ${i.t} → ${i.a||'(조치 미정)'} [${STAGES[+i.g||6].n} ${STAGES[+i.g||6].t}로]`).join('\n')||'- (없음)'}
-`;
-  const old=$('mdOut');if(old)old.remove();
-  const d=document.createElement('div');d.id='mdOut';d.className='card';
-  d.innerHTML=`<div class="ch"><h3>문서</h3><span class="bd">복사해서 쓰세요</span></div>
-    <div class="br"><button class="btn sm" id="cp">복사</button>
-    <button class="btn gh sm" id="dlmd">.md 저장</button></div><div class="out">${esc(md)}</div>`;
-  $('main').appendChild(d);d.scrollIntoView({behavior:'smooth'});
-  $('cp').onclick=async()=>{try{await navigator.clipboard.writeText(md);$('cp').textContent='복사됨';}
-    catch(e){$('cp').textContent='직접 선택하세요';}};
-  $('dlmd').onclick=()=>dl((S.title||'plan')+'.md',md,'text/markdown;charset=utf-8');
+ASKB.norm = function (s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[\[\]\(\)\{\}]/g, ' ')
+    .replace(/[°℃℉]/g, ' ')
+    .replace(/[_\-.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
-window.onbeforeunload=()=>(S.ideas.length||S.goal.stm)?'저장하지 않은 내용이 사라집니다.':null;
 
-render();tick();
+ASKB.stats = function (values) {
+  var nums = [], nulls = 0, distinct = {}, dcount = 0, i, v, n;
+  for (i = 0; i < values.length; i++) {
+    v = values[i];
+    if (v === null || v === undefined || String(v).trim() === '') { nulls++; continue; }
+    if (distinct[v] === undefined) { distinct[v] = 0; dcount++; }
+    distinct[v]++;
+    n = Number(String(v).replace(/,/g, ''));
+    if (isFinite(n)) nums.push(n);
+  }
+  nums.sort(function (a, b) { return a - b; });
+  var med = nums.length ? nums[Math.floor(nums.length / 2)] : null;
+  var allInt = nums.length > 0 && nums.every(function (x) { return Number.isInteger(x); });
+  return {
+    n: values.length, nulls: nulls, nullRate: values.length ? nulls / values.length : 0,
+    numeric: nums.length, isNumeric: nums.length > 0 && nums.length >= (values.length - nulls),
+    min: nums.length ? nums[0] : null, max: nums.length ? nums[nums.length - 1] : null,
+    median: med, allInt: allInt, distinct: distinct, distinctCount: dcount
+  };
+};
+
+/* 값 분포로 단위 사전확률을 매긴다. 여기서 '기각'은 하지 않는다 — 기각은 ③의 일. */
+ASKB.priorsFromValues = function (field, st) {
+  var m = st.median, out = [];
+  function add(u, p, why) { out.push({ unit: u, prior: p, why: why }); }
+  if (m === null) return out;
+
+  if (field.indexOf('temp') >= 0) {
+    if (m >= 1000) {
+      add('degF_x10', 0.40, '네 자리 정수대(중앙값 ' + m + ') — 소수점을 없애려 10배로 저장한 화씨로 보임');
+      add('degC_x10', 0.40, '네 자리 정수대(중앙값 ' + m + ') — 10배로 저장한 섭씨일 수도 있음');
+      add('degC', 0.15, '스케일 없는 섭씨 원본일 가능성');
+      add('degF', 0.05, '스케일 없는 화씨 원본일 가능성');
+    } else if (m >= 250 && m <= 400) {
+      add('kelvin', 0.45, '중앙값 ' + m + ' — 상온을 켈빈으로 적으면 나오는 대역');
+      add('degF', 0.30, '중앙값 ' + m + ' — 고온 공정을 화씨로 적었을 수 있음');
+      add('degC', 0.25, '중앙값 ' + m + ' — 열처리 온도를 섭씨로 적었을 수 있음');
+    } else if (m >= 120) {
+      add('degC', 0.55, '중앙값 ' + m + ' — 섭씨 열처리 대역');
+      add('degF', 0.45, '중앙값 ' + m + ' — 화씨로 적힌 중온 공정일 수 있음');
+    } else if (m >= 20) {
+      add('degC', 0.65, '중앙값 ' + m + ' — 섭씨 부품/주변 온도 대역');
+      add('degF', 0.35, '중앙값 ' + m + ' — 화씨 저온 대역');
+    } else {
+      add('degC', 0.8, '중앙값 ' + m + ' — 섭씨 저온');
+      add('degF', 0.2, '화씨 가능성');
+    }
+  } else if (field === 'rotational_speed_rpm') {
+    if (m > 100) add('rpm', 0.9, '중앙값 ' + m + ' — 분당 회전수 대역'); else add('rpm', 0.5, '');
+    add('rps', m > 100 ? 0.1 : 0.5, '초당 회전수로 적었을 가능성');
+  } else if (field === 'torque_nm') {
+    add('Nm', 0.75, '중앙값 ' + m + ' — N·m 대역');
+    add('kgfcm', 0.25, 'kgf·cm로 적었을 가능성');
+  } else if (field === 'tool_wear_min') {
+    add('min', 0.85, '중앙값 ' + m + ' — 분 단위 누적 대역');
+    add('hour', 0.15, '시간 단위 가능성');
+  } else if (field === 'vibration_mm_s') {
+    if (m < 5) { add('g_rms', 0.5, '중앙값 ' + m + ' — 가속도 g 단위로 적었을 가능성'); add('mm_s', 0.5, '중앙값 ' + m + ' — mm/s 저진동 대역'); }
+    else { add('mm_s', 0.85, '중앙값 ' + m + ' — mm/s 대역'); add('g_rms', 0.15, 'g 단위 가능성'); }
+  } else if (field === 'pressure_bar') {
+    if (m > 1000) { add('kPa', 0.6, '중앙값 ' + m + ' — kPa 대역'); add('psi', 0.25, 'psi 가능성'); add('bar', 0.15, 'bar 가능성'); }
+    else if (m > 100) { add('psi', 0.45, '중앙값 ' + m + ' — psi 대역'); add('kPa', 0.3, 'kPa 가능성'); add('bar', 0.25, 'bar 가능성'); }
+    else { add('bar', 0.5, '중앙값 ' + m + ' — bar 대역'); add('psi', 0.3, 'psi 가능성'); add('MPa', 0.2, 'MPa 가능성'); }
+  }
+  return out;
+};
+
+/* --------------------------------------------------------------------------
+   설비 설명서(.md) 파서
+   기업이 첨부한 마크다운에서 컬럼 정의를 뽑는다. 이게 있으면 ①의 모호성이
+   사라지고, 없으면 사람에게 질문이 올라간다. 슬라이드에서 말한 그 차이다.
+   문법:  - `컬럼명`: 설명 ... 단위: °F ... 표준=OK ...
+   ------------------------------------------------------------------------ */
+ASKB.parseMd = function (text) {
+  var doc = { columns: {}, timezone: null, operatingRange: null, equipment: null, raw: text || '' };
+  if (!text) return doc;
+  var lines = String(text).split(/\r?\n/);
+  lines.forEach(function (ln) {
+    var m;
+    if ((m = /^\s*[-*]\s*`([^`]+)`\s*:\s*(.+)$/.exec(ln))) {
+      var col = m[1].trim(), body = m[2];
+      var c = { desc: body, field: null, unit: null, tz: null, map: null, range: null, format: null };
+      var u = /단위\s*[:=]\s*([^,;·|]+)/.exec(body) || /unit\s*[:=]\s*([^,;·|]+)/i.exec(body);
+      if (u) c.unit = ASKB.unitFromText(u[1]);
+      var f = /표준\s*필드\s*[:=]\s*([a-z_]+)/i.exec(body);
+      if (f) c.field = f[1];
+      if (/표준\s*필드\s*[:=]\s*제외/.test(body)) c.drop = true;
+      if (/표준\s*필드\s*[:=]\s*보존/.test(body)) c.keep = true;
+      var tzm = /타임존\s*[:=]\s*([A-Za-z_\/]+)/.exec(body) || /timezone\s*[:=]\s*([A-Za-z_\/]+)/i.exec(body);
+      if (tzm) c.tz = tzm[1];
+      var fm = /형식\s*[:=]\s*([^,;|]+)/.exec(body);
+      if (fm) c.format = fm[1].trim();
+      /* 극성 선언:  1=정상, 0=불량  /  N=정상 */
+      var pairs = body.match(/([A-Za-z0-9가-힣]+)\s*=\s*(정상|불량|OK|NOK|NG)/gi);
+      if (pairs) {
+        c.map = {};
+        pairs.forEach(function (p) {
+          var pm = /([A-Za-z0-9가-힣]+)\s*=\s*(정상|불량|OK|NOK|NG)/i.exec(p);
+          c.map[pm[1]] = /정상|ok/i.test(pm[2]) ? 'OK' : 'NOK';
+        });
+      }
+      var rg = /정상\s*운전\s*범위\s*[:=]?\s*(-?[\d.]+)\s*[~\-–]\s*(-?[\d.]+)/.exec(body);
+      if (rg) c.range = [parseFloat(rg[1]), parseFloat(rg[2])];
+      doc.columns[ASKB.norm(col)] = c;
+    } else if ((m = /타임존\s*[:=]\s*([A-Za-z_\/]+)/.exec(ln))) {
+      doc.timezone = m[1];
+    } else if ((m = /정상\s*운전\s*범위\s*[:=]?\s*(-?[\d.]+)\s*[~\-–]\s*(-?[\d.]+)\s*(°?[CFK]|℃)?/.exec(ln))) {
+      doc.operatingRange = [parseFloat(m[1]), parseFloat(m[2])];
+    } else if ((m = /^#\s*(.+)$/.exec(ln))) {
+      if (!doc.equipment) doc.equipment = m[1].trim();
+    }
+  });
+  return doc;
+};
+
+ASKB.formatIdFromText = function (t) {
+  var s = String(t || '').toUpperCase().replace(/\s+/g, '');
+  if (/^YYYY-MM-DD/.test(s)) return 'iso_local';
+  if (/MM\/DD\/YY/.test(s)) return 'us_12h';
+  if (/DD\/MM\/YY/.test(s)) return 'eu_12h';
+  if (/^YY\./.test(s)) return 'dot_ymd';
+  if (/EPOCH.*MS|밀리초/.test(s)) return 'epoch_ms';
+  if (/EPOCH/.test(s)) return 'epoch_s';
+  return null;
+};
+
+ASKB.unitFromText = function (t) {
+  var s = String(t).trim();
+  for (var i = 0; i < ASKB.HEADER_UNIT_HINTS.length; i++) {
+    if (ASKB.HEADER_UNIT_HINTS[i].re.test(s)) return ASKB.HEADER_UNIT_HINTS[i].unit;
+  }
+  if (/^k$/i.test(s)) return 'kelvin';
+  return null;
+};
+
+/* --------------------------------------------------------------------------
+   컬럼 1개에 대한 ① 추측 결과
+   ------------------------------------------------------------------------ */
+ASKB.proposeColumn = function (header, values, md) {
+  var nname = ASKB.norm(header);
+  var st = ASKB.stats(values);
+  var out = {
+    header: header, stats: st,
+    field: null, fieldConfidence: 0, fieldAlternatives: [], evidence: [], questions: [],
+    unitHypotheses: [], enumMap: null, timeFormats: null, timezone: null, source: 'inferred'
+  };
+
+  var mdCol = md && md.columns ? md.columns[nname] : null;
+
+  /* --- 표준 필드 후보 --- */
+  var best = null;
+  ASKB.NAME_RULES.forEach(function (r) {
+    r.keys.forEach(function (k) {
+      var nk = ASKB.norm(k);
+      var hit = (nname === nk) || (nname.indexOf(nk) >= 0 && nk.length >= 2);
+      if (hit) {
+        var p = r.p + (nname === nk ? 0.02 : 0);
+        if (!best || p > best.p) best = { field: r.field, p: p, key: k };
+      }
+    });
+  });
+
+  if (best && best.field === '__temp_ambiguous__') {
+    out.field = 'process_temp_c';
+    out.fieldConfidence = 0.55;
+    out.fieldAlternatives = ['component_temp_c', 'ambient_temp_c'];
+    out.evidence.push('컬럼명 "' + header + '"은 온도라는 것만 알려줍니다. 공정 온도인지 부품 온도인지 주변 온도인지는 이름에 없습니다.');
+    out.questions.push({
+      id: 'field', kind: 'choice', label: '이 온도는 어느 지점입니까?',
+      options: ['process_temp_c', 'component_temp_c', 'ambient_temp_c'],
+      why: '이름만으로 지점을 확정할 수 없어 학습 데이터에 잘못 합쳐질 위험이 있습니다.'
+    });
+  } else if (best) {
+    out.field = best.field;
+    out.fieldConfidence = best.p;
+    out.evidence.push('컬럼명이 표준 필드 ' + best.field + '의 별칭 "' + best.key + '"과 일치합니다.');
+  } else {
+    out.field = null;
+    out.fieldConfidence = 0;
+    out.evidence.push('표준 스키마에 대응하는 필드를 찾지 못했습니다.');
+    out.questions.push({
+      id: 'unmapped', kind: 'choice', label: '표준 스키마 밖의 컬럼입니다. 어떻게 할까요?',
+      options: ['부가정보로 보존', '제외'],
+      why: '표준 필드가 아니면 공유 풀의 공통 스키마에 들어갈 수 없습니다.'
+    });
+  }
+
+  /* 설명서가 '제외' 또는 '보존'을 선언한 컬럼 */
+  if (mdCol && (mdCol.drop || mdCol.keep)) {
+    out.field = null;
+    out.fieldConfidence = 0.99;
+    out.questions = [];
+    out.source = 'md';
+    out.declared = mdCol.drop ? 'drop' : 'keep';
+    out.evidence = ['설비 설명서가 이 컬럼을 표준 스키마 ' +
+      (mdCol.drop ? '밖으로 제외하도록' : '밖의 부가정보로 보존하도록') + ' 선언했습니다.'];
+    return out;
+  }
+
+  /* 설명서가 필드를 직접 지정했다면 추측을 덮어쓴다 */
+  if (mdCol && mdCol.field && ASKB.SCHEMA[mdCol.field]) {
+    out.field = mdCol.field;
+    out.fieldConfidence = 0.99;
+    out.fieldAlternatives = [];
+    out.questions = out.questions.filter(function (q) { return q.id !== 'field' && q.id !== 'unmapped'; });
+    out.evidence = ['설비 설명서(.md)가 표준 필드를 ' + mdCol.field + '로 선언했습니다.'];
+    out.source = 'md';
+  }
+  if (!out.field) return out;
+
+  var kind = ASKB.SCHEMA[out.field].kind;
+
+  /* --- 시각 컬럼 --- */
+  if (kind === 'time') {
+    var det = ASKB.detectTimeFormats(values);
+    var live = det.formats;
+    /* 설명서가 형식을 선언했으면 후보를 그것으로 좁힌다 */
+    if (mdCol && mdCol.format) {
+      var want = ASKB.formatIdFromText(mdCol.format);
+      var narrowed = live.filter(function (f) { return f.id === want; });
+      if (narrowed.length) {
+        live = narrowed;
+        out.evidence.push('설비 설명서가 시각 형식을 "' + mdCol.format + '"으로 선언했습니다.');
+      }
+    }
+    det = { formats: live, evidence: det.evidence };
+    out.timeFormats = det.formats.map(function (f) { return { id: f.id, label: f.label }; });
+    if (det.evidence && det.formats.length > 1) out.evidence.push(det.evidence);
+    out.timezone = (mdCol && mdCol.tz) || (md && md.timezone) || null;
+    if (!out.timezone) {
+      out.questions.push({
+        id: 'tz', kind: 'choice', label: '이 시각은 어느 타임존입니까?',
+        options: ['Asia/Seoul', 'UTC', 'Europe/Berlin', 'America/Chicago'],
+        why: '타임존 없이는 UTC로 옮길 수 없습니다. 9시간이 조용히 틀어집니다.'
+      });
+    } else {
+      out.evidence.push('설비 설명서가 타임존을 ' + out.timezone + '로 선언했습니다.');
+    }
+    if (det.formats.length === 0) {
+      out.questions.push({ id: 'timefmt', kind: 'text', label: '알려진 시각 형식과 맞지 않습니다. 형식을 알려주세요.', why: '' });
+    } else if (det.formats.length > 1) {
+      out.questions.push({
+        id: 'timefmt', kind: 'choice', label: '시각 형식이 둘 이상 맞습니다. 어느 쪽입니까?',
+        options: det.formats.map(function (f) { return f.id; }),
+        labels: det.formats.map(function (f) { return f.label; }),
+        why: '같은 문자열이 8월 10일도 되고 10월 8일도 됩니다.'
+      });
+    } else {
+      out.evidence.push('시각 형식은 ' + det.formats[0].label + ' 하나만 전체 행에 맞습니다.');
+    }
+    return out;
+  }
+
+  /* --- 판정 컬럼 : 극성은 데이터로 알 수 없다 --- */
+  if (kind === 'enum') {
+    var keys = Object.keys(st.distinct);
+    var lexical = { 'ok': 'OK', 'pass': 'OK', '정상': 'OK', 'good': 'OK', 'accept': 'OK', '합격': 'OK',
+                    'ng': 'NOK', 'nok': 'NOK', 'fail': 'NOK', '불량': 'NOK', 'bad': 'NOK', 'reject': 'NOK', '불합격': 'NOK' };
+    var map = {}, allLexical = keys.length > 0;
+    keys.forEach(function (k) {
+      var lk = String(k).trim().toLowerCase();
+      if (lexical[lk]) map[k] = lexical[lk]; else allLexical = false;
+    });
+
+    if (mdCol && mdCol.map) {
+      out.enumMap = {};
+      keys.forEach(function (k) {
+        var hit = null;
+        Object.keys(mdCol.map).forEach(function (dk) {
+          if (String(dk).trim().toLowerCase() === String(k).trim().toLowerCase()) hit = mdCol.map[dk];
+        });
+        out.enumMap[k] = hit;
+      });
+      out.fieldConfidence = 0.99;
+      out.source = 'md';
+      out.evidence.push('설비 설명서가 표기 극성을 직접 선언했습니다: ' +
+        Object.keys(mdCol.map).map(function (k) { return k + '→' + mdCol.map[k]; }).join(', '));
+    } else if (allLexical) {
+      out.enumMap = map;
+      out.evidence.push('관측된 값 (' + keys.join(', ') + ')이 모두 뜻이 정해진 표기입니다.');
+    } else {
+      /* 이름에서 극성을 추측해 보되, 이게 틀릴 수 있음을 명시한다 */
+      var failSense = ASKB.FAIL_SENSE.some(function (k) { return nname.indexOf(ASKB.norm(k)) >= 0; });
+      var guess = {};
+      keys.forEach(function (k) {
+        var lk = String(k).trim().toLowerCase();
+        var truthy = (lk === '1' || lk === 'y' || lk === 'yes' || lk === 'true' || lk === 't');
+        guess[k] = failSense ? (truthy ? 'NOK' : 'OK') : (truthy ? 'OK' : 'NOK');
+      });
+      out.enumMap = guess;
+      out.fieldConfidence = 0.4;
+      out.evidence.push('컬럼명이 "' + header + '"이므로 ' + (failSense ? '참(1/Y/True)을 불량으로' : '참(1/Y/True)을 정상으로') + ' 추측했습니다.');
+      out.questions.push({
+        id: 'polarity', kind: 'polarity', label: '표기 극성을 확정해 주세요: ' + keys.join(' / '),
+        keys: keys, guess: guess,
+        why: '이름에 기댄 추측은 실제로 뒤집힙니다. 공개 데이터셋 두 개만 봐도 machine_failure의 1이 한쪽은 정상, 다른 쪽은 불량입니다. 데이터만 보고는 판별할 방법이 없습니다.'
+      });
+    }
+    return out;
+  }
+
+  /* --- 수치 컬럼 : 단위 가설 --- */
+  var pool = ASKB.UNIT_POOL[out.field] || [];
+  var hyp = [];
+
+  var headerHint = null;
+  for (var i = 0; i < ASKB.HEADER_UNIT_HINTS.length; i++) {
+    if (ASKB.HEADER_UNIT_HINTS[i].re.test(header) && pool.indexOf(ASKB.HEADER_UNIT_HINTS[i].unit) >= 0) {
+      headerHint = ASKB.HEADER_UNIT_HINTS[i]; break;
+    }
+  }
+  var mdUnit = mdCol && mdCol.unit && pool.indexOf(mdCol.unit) >= 0 ? mdCol.unit : null;
+
+  if (mdUnit) {
+    hyp.push({ unit: mdUnit, prior: 0.99, why: '설비 설명서가 단위를 ' + ASKB.UNITS[mdUnit].label + '로 선언했습니다.', from: 'md' });
+    out.source = 'md';
+  } else if (headerHint) {
+    hyp.push({ unit: headerHint.unit, prior: 0.95, why: headerHint.why, from: 'header' });
+  } else {
+    hyp = ASKB.priorsFromValues(out.field, st).filter(function (h) { return pool.indexOf(h.unit) >= 0; });
+    hyp.forEach(function (h) { h.from = 'values'; });
+  }
+  if (!hyp.length && pool.length) hyp.push({ unit: pool[0], prior: 0.5, why: '기본 단위로 가정', from: 'default' });
+
+  /* 스케일 단위로 확정된 경우, 스케일을 무시하면 어떻게 되는지 반례를 남긴다.
+     이 가설은 ③ 검증 코드에서 물리 범위에 걸려 기각되는 모습으로 화면에 남는다. */
+  if (hyp.length === 1 && (hyp[0].unit === 'degC_x10' || hyp[0].unit === 'degF_x10')) {
+    hyp.push({
+      unit: hyp[0].unit === 'degC_x10' ? 'degC' : 'degF', prior: 0.02,
+      why: '10배 스케일을 못 보고 값을 그대로 읽었을 경우 — 검증 코드가 잡아내는지 확인하는 반례',
+      from: 'counterexample'
+    });
+  }
+
+  hyp.sort(function (a, b) { return b.prior - a.prior; });
+  out.unitHypotheses = hyp;
+  out.mdRange = (mdCol && mdCol.range) || null;
+  if (hyp.length > 1 && hyp[0].from === 'values') {
+    out.fieldConfidence = Math.min(out.fieldConfidence, 0.6);
+  }
+  return out;
+};
+
+/* ============================================================================
+   ② 계산기 · ③ 검증 코드 · ④ 사람 확답 · 매핑 사전
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   ② 결정적 계산 — 가설별로 전체 값을 변환한다. LLM은 이 코드를 부르지 못한다.
+   --------------------------------------------------------------------------- */
+ASKB.computeHypothesis = function (values, unitKey) {
+  var u = ASKB.UNITS[unitKey];
+  var conv = [], i, raw, n, out;
+  for (i = 0; i < values.length; i++) {
+    raw = values[i];
+    if (raw === null || raw === undefined || String(raw).trim() === '') { conv.push(null); continue; }
+    n = Number(String(raw).replace(/,/g, ''));
+    if (!isFinite(n)) { conv.push(null); continue; }
+    out = u.fwd(n);
+    conv.push(out);
+  }
+  var valid = conv.filter(function (v) { return v !== null && isFinite(v); });
+  valid.sort(function (a, b) { return a - b; });
+  return {
+    unit: unitKey, unitLabel: u.label, converted: conv,
+    min: valid.length ? valid[0] : null,
+    max: valid.length ? valid[valid.length - 1] : null,
+    median: valid.length ? valid[Math.floor(valid.length / 2)] : null,
+    sampleFormula: values.length ? u.formula(Number(String(values[0]).replace(/,/g, ''))) : '',
+    sampleIn: values.length ? values[0] : '',
+    sampleOut: valid.length ? ASKB.round(u.fwd(Number(String(values[0]).replace(/,/g, ''))), 2) : null
+  };
+};
+
+/* ---------------------------------------------------------------------------
+   ③ 검증 코드 — "말이 되나?" 결과는 pass / warn / fail
+   --------------------------------------------------------------------------- */
+ASKB.CHECKS = {
+  RANGE: '물리 범위', ROUNDTRIP: '왕복 일치', NULLRATE: '결측률', PARSE: '형식 해석',
+  CHRONO: '시간 순서', ENUM: '분류 관측', POLARITY: '극성 확정', CROSS: '필드 교차', UNIQUE: '가설 유일'
+};
+
+ASKB.verifyNumeric = function (comp, field, mdRange) {
+  var sc = ASKB.SCHEMA[field];
+  var checks = [];
+
+  /* (1) 물리 범위 — 이 밖으로 나가면 그 단위 가설은 성립할 수 없다 */
+  var bad = 0, n = 0;
+  comp.converted.forEach(function (v) {
+    if (v === null) return; n++;
+    if (v < sc.range[0] || v > sc.range[1]) bad++;
+  });
+  var rate = n ? bad / n : 1;
+  checks.push({
+    id: 'RANGE', level: bad === 0 ? 'pass' : (rate <= 0.01 ? 'warn' : 'fail'),
+    msg: bad === 0
+      ? '변환값 ' + n + '건 모두 물리 범위 ' + sc.range[0] + ' ~ ' + sc.range[1] + ' ' + sc.unit + ' 안'
+      : bad + '건이 물리 범위 ' + sc.range[0] + ' ~ ' + sc.range[1] + ' ' + sc.unit + ' 밖 — 중앙값 ' +
+        ASKB.round(comp.median, 2) + ' ' + sc.unit + '는 이 단위로 성립하지 않습니다'
+  });
+
+  /* (2) 선언된 정상 운전 범위 — 중앙값이 여기 들어와야 단위가 맞는 것이다.
+         개별 행의 이탈은 불량 사례이므로 기각 사유가 아니다. */
+  if (mdRange) {
+    var out = 0;
+    comp.converted.forEach(function (v) {
+      if (v === null) return;
+      if (v < mdRange[0] || v > mdRange[1]) out++;
+    });
+    var medIn = comp.median !== null && comp.median >= mdRange[0] && comp.median <= mdRange[1];
+    comp.excursions = out;
+    checks.push({
+      id: 'OPERATING', level: medIn ? (out === 0 ? 'pass' : 'warn') : 'fail',
+      msg: medIn
+        ? '중앙값 ' + ASKB.round(comp.median, 2) + ' ' + sc.unit + '가 선언된 정상 운전 범위 ' +
+          mdRange[0] + ' ~ ' + mdRange[1] + ' 안' +
+          (out ? ' · 이탈 ' + out + '건은 불량 사례로 보존' : '')
+        : '중앙값 ' + ASKB.round(comp.median, 2) + ' ' + sc.unit + '가 선언된 정상 운전 범위 ' +
+          mdRange[0] + ' ~ ' + mdRange[1] + ' 밖 — 이 단위로 읽으면 라인 전체가 비정상이 됩니다'
+    });
+  }
+
+  /* 왕복 검증: 표준값을 원래 단위로 되돌렸을 때 원본과 같아야 한다 */
+  var u = ASKB.UNITS[comp.unit], worst = 0;
+  comp.converted.forEach(function (v, i) {
+    if (v === null) return;
+    var back = u.inv(v);
+    var orig = Number(String(comp.rawValues ? comp.rawValues[i] : v).replace(/,/g, ''));
+    if (isFinite(orig) && Math.abs(orig) > 1e-9) {
+      worst = Math.max(worst, Math.abs(back - orig) / Math.abs(orig));
+    }
+  });
+  checks.push({
+    id: 'ROUNDTRIP', level: worst < 1e-9 ? 'pass' : (worst < 1e-6 ? 'warn' : 'fail'),
+    msg: '되돌림 오차 최대 ' + worst.toExponential(1) + ' — 변환이 정보를 잃지 않음'
+  });
+  return checks;
+};
+
+ASKB.verifyNullRate = function (st) {
+  return {
+    id: 'NULLRATE', level: st.nullRate === 0 ? 'pass' : (st.nullRate <= 0.05 ? 'warn' : 'fail'),
+    msg: '결측 ' + st.nulls + '/' + st.n + ' (' + ASKB.round(st.nullRate * 100, 1) + '%)'
+  };
+};
+
+/* ---------------------------------------------------------------------------
+   파이프라인 — 데이터셋 1개를 표준 데이터로
+   --------------------------------------------------------------------------- */
+ASKB.runPipeline = function (dataset, opts) {
+  opts = opts || {};
+  var md = opts.useMd && dataset.md ? ASKB.parseMd(dataset.md) : null;
+  var dict = opts.dictionary || {};
+  var rows = dataset.rows, headers = dataset.headers;
+  var decisions = [], dictHits = 0, questionCount = 0;
+
+  headers.forEach(function (h, ci) {
+    var values = rows.map(function (r) { return r[ci]; });
+    var sig = ASKB.signature(dataset.equipment, h);
+    var cached = dict[sig];
+
+    var prop;
+    if (cached && opts.useDictionary !== false) {
+      prop = {
+        header: h, stats: ASKB.stats(values), field: cached.field, fieldConfidence: 0.99,
+        fieldAlternatives: [], evidence: ['매핑 사전 적중 — ' + cached.approvedBy + '가 ' + cached.approvedAt + '에 확정한 매핑을 재사용합니다. 추측 단계를 건너뜁니다.'],
+        questions: [], unitHypotheses: cached.unit ? [{ unit: cached.unit, prior: 1, why: '사전에 적립된 단위', from: 'dict' }] : [],
+        enumMap: cached.enumMap || null, timeFormats: cached.timeFormat ? [{ id: cached.timeFormat, label: cached.timeFormat }] : null,
+        timezone: cached.timezone || null, mdRange: cached.mdRange || null, source: 'dict'
+      };
+      dictHits++;
+    } else {
+      prop = ASKB.proposeColumn(h, values, md);
+    }
+
+    var d = {
+      header: h, index: ci, field: prop.field, proposal: prop, source: prop.source,
+      hypotheses: [], chosen: null, checks: [], status: 'pending', questions: prop.questions.slice(),
+      rawValues: values
+    };
+
+    if (!prop.field) {
+      if (prop.declared) {
+        d.status = 'auto';
+        d.declared = prop.declared;
+        d.checks = [{ id: 'UNIQUE', level: 'pass',
+          msg: prop.declared === 'drop' ? '설명서 선언에 따라 제외 — 표준 데이터에 싣지 않습니다'
+                                        : '설명서 선언에 따라 부가정보로 보존 — 공통 스키마 밖 열로 따라갑니다' }];
+      } else {
+        d.status = 'queued';
+        d.checks = [{ id: 'UNIQUE', level: 'fail', msg: '표준 스키마에 대응되는 필드가 없습니다 — 사람이 보존 여부를 정해야 합니다' }];
+        questionCount += 1;
+      }
+      decisions.push(d); return;
+    }
+
+    var kind = ASKB.SCHEMA[prop.field].kind;
+
+    if (kind === 'time') {
+      d.hypotheses = ASKB.timeHypotheses(
+        values, (prop.timeFormats || []).map(function (f) { return f.id; }), prop.timezone);
+    } else if (kind === 'id') {
+      var ikeys = Object.keys(prop.stats.distinct);
+      d.hypotheses.push({
+        kind: 'id', unit: 'passthrough', unitLabel: '문자열', prior: 1,
+        why: '식별자는 계산 대상이 아니므로 값을 그대로 옮깁니다',
+        sampleIn: values[0], sampleOut: values[0],
+        sampleFormula: '값 그대로 (관측 ' + ikeys.length + '종)',
+        checks: [{
+          id: 'PARSE', level: ikeys.length ? 'pass' : 'fail',
+          msg: ikeys.length ? '식별자 ' + ikeys.length + '종 관측 — 빈 값 없음' : '식별자를 읽지 못했습니다'
+        }]
+      });
+    } else if (kind === 'enum') {
+      var keys = Object.keys(prop.stats.distinct);
+      var mapped = prop.enumMap || {};
+      var unresolved = keys.filter(function (k) { return !mapped[k]; });
+      d.hypotheses.push({
+        kind: 'enum', unit: 'enum', unitLabel: 'OK / NOK', prior: 1,
+        why: '관측 표기 ' + keys.join(', ') + ' 를 표준 판정으로 대응',
+        map: mapped, sampleIn: keys.join(' / '),
+        sampleOut: keys.map(function (k) { return mapped[k] || '?'; }).join(' / '),
+        sampleFormula: keys.map(function (k) { return k + ' → ' + (mapped[k] || '미정'); }).join(' , '),
+        checks: [
+          { id: 'ENUM', level: keys.length >= 2 ? 'pass' : 'warn',
+            msg: keys.length >= 2 ? '분류 ' + keys.length + '종 관측 (' + keys.join(', ') + ')' : '한 종류(' + keys.join('') + ')만 관측 — 반대 분류를 본 적이 없어 극성 확인 불가' },
+          { id: 'POLARITY', level: (prop.source === 'md' || prop.source === 'dict') ? 'pass' : (unresolved.length ? 'fail' : 'fail'),
+            msg: (prop.source === 'md') ? '설명서 선언으로 극성 확정'
+               : (prop.source === 'dict') ? '사전에 적립된 극성 사용'
+               : '선언 없음 — 이름에 기댄 추측은 근거가 못 됩니다. 사람 확답 필요' }
+        ]
+      });
+    } else {
+      d.hypotheses = ASKB.numHypotheses(values, prop.field, prop.unitHypotheses, prop.mdRange);
+    }
+
+    /* ③ 검증 결과로 가설을 기각한다 */
+    d.hypotheses.forEach(function (h) {
+      h.rejected = h.checks.some(function (c) { return c.level === 'fail'; });
+    });
+    var survivors = d.hypotheses.filter(function (h) { return !h.rejected; });
+    d.survivors = survivors.length;
+    /* 검증 코드가 이미 하나로 좁힌 것은 사람에게 묻지 않는다 */
+    if (survivors.length === 1) d.questions = d.questions.filter(function (q) { return q.id !== 'timefmt'; });
+
+    d.checks = [ASKB.verifyNullRate(prop.stats)];
+    d.checks.push({
+      id: 'UNIQUE',
+      level: survivors.length === 1 ? 'pass' : (survivors.length === 0 ? 'fail' : 'warn'),
+      msg: survivors.length === 1
+        ? '검증을 통과한 가설이 하나로 좁혀졌습니다 — ' + survivors[0].unitLabel
+        : survivors.length === 0
+          ? '모든 가설이 기각되었습니다 — 사람이 단위를 알려줘야 합니다'
+          : survivors.length + '개 가설이 살아남았습니다 — 데이터만으로는 못 가립니다'
+    });
+
+    var hardQ = d.questions.length > 0;
+    var anyFail = d.checks.some(function (c) { return c.level === 'fail'; });
+
+    if (survivors.length === 1 && !hardQ && !anyFail) {
+      d.chosen = survivors[0];
+      d.status = 'auto';
+    } else {
+      d.chosen = survivors.length ? survivors[0] : d.hypotheses[0];
+      d.status = 'queued';
+      questionCount += Math.max(1, d.questions.length);
+    }
+    decisions.push(d);
+  });
+
+  /* 필드 교차 검증: 주변 온도는 공정 온도보다 낮아야 한다 */
+  var byField = {};
+  decisions.forEach(function (d) { if (d.field && d.chosen) byField[d.field] = d; });
+  if (byField.ambient_temp_c && byField.process_temp_c &&
+      byField.ambient_temp_c.chosen.converted && byField.process_temp_c.chosen.converted) {
+    var a = byField.ambient_temp_c.chosen.converted, p = byField.process_temp_c.chosen.converted, viol = 0, cnt = 0;
+    for (var i = 0; i < Math.min(a.length, p.length); i++) {
+      if (a[i] === null || p[i] === null) continue; cnt++;
+      if (a[i] > p[i]) viol++;
+    }
+    var cross = {
+      id: 'CROSS', level: viol === 0 ? 'pass' : 'fail',
+      msg: viol === 0
+        ? '주변 온도가 공정 온도보다 항상 낮습니다 (' + cnt + '건) — 두 온도의 지점 배정이 서로 모순되지 않음'
+        : viol + '건에서 주변 온도가 공정 온도보다 높습니다 — 두 컬럼의 지점이 뒤바뀐 것으로 의심'
+    };
+    byField.ambient_temp_c.checks.push(cross);
+    byField.process_temp_c.checks.push(cross);
+  }
+
+  /* 극성 교차 근거: 값이 정상 운전 범위를 벗어난 행이 어느 표기에 몰려 있는가.
+     상관관계는 선언을 대신하지 못하므로 승인하지 않는다. 사람에게 근거만 준다. */
+  var vd = byField.verdict, pt = byField.process_temp_c || byField.component_temp_c;
+  if (vd && pt && pt.chosen && pt.chosen.converted && pt.proposal.mdRange) {
+    var rg = pt.proposal.mdRange, tally = {}, total = {};
+    rows.forEach(function (r, i) {
+      var lab = r[vd.index]; if (lab === undefined || lab === null || String(lab).trim() === '') return;
+      var v = pt.chosen.converted[i]; if (v === null) return;
+      total[lab] = (total[lab] || 0) + 1;
+      if (v < rg[0] || v > rg[1]) tally[lab] = (tally[lab] || 0) + 1;
+    });
+    var labels = Object.keys(total), lines = [], worst = null;
+    labels.forEach(function (l) {
+      var r0 = (tally[l] || 0) / total[l];
+      lines.push('"' + l + '" ' + (tally[l] || 0) + '/' + total[l] + '건 이탈');
+      if (!worst || r0 > worst.rate) worst = { label: l, rate: r0 };
+    });
+    if (labels.length >= 2 && worst && worst.rate > 0.5) {
+      vd.polarityHint = {
+        label: worst.label,
+        msg: '온도가 정상 운전 범위를 벗어난 행은 ' + lines.join(' · ') +
+             ' 입니다. 표기 "' + worst.label + '"이 불량 쪽일 가능성이 높습니다. ' +
+             '다만 상관관계는 선언을 대신하지 못하므로 확답이 필요합니다.'
+      };
+      vd.checks.push({ id: 'CROSS', level: 'warn', msg: '극성 추정 근거 확보 — ' + lines.join(' · ') });
+    }
+  }
+
+  /* 데이터셋 수준 필수 필드 */
+  var present = {};
+  decisions.forEach(function (d) { if (d.field) present[d.field] = true; });
+  var missing = ASKB.SCHEMA_ORDER.filter(function (f) { return ASKB.SCHEMA[f].required && !present[f]; });
+
+  return {
+    dataset: dataset, md: md, decisions: decisions, missing: missing,
+    dictHits: dictHits, questionCount: questionCount,
+    autoCount: decisions.filter(function (d) { return d.status === 'auto'; }).length,
+    queuedCount: decisions.filter(function (d) { return d.status === 'queued'; }).length
+  };
+};
+
+/* ---------------------------------------------------------------------------
+   표준 데이터 발행 — 승인된 결정만 사용한다
+   --------------------------------------------------------------------------- */
+ASKB.publish = function (run) {
+  var rows = run.dataset.rows;
+  var cols = {}, extras = [];
+  run.decisions.forEach(function (d) {
+    if (d.status !== 'auto' && d.status !== 'approved') return;
+    if (d.declared === 'keep') { extras.push(d); return; }
+    if (!d.field || !d.chosen) return;
+    cols[d.field] = d;
+  });
+
+  var out = [], i;
+  for (i = 0; i < rows.length; i++) {
+    var rec = {};
+    ASKB.SCHEMA_ORDER.forEach(function (f) {
+      var d = cols[f];
+      if (!d) { rec[f] = null; return; }
+      var raw = rows[i][d.index];
+      var k = ASKB.SCHEMA[f].kind;
+      if (k === 'time') {
+        rec[f] = d.chosen.parsed && d.chosen.parsed[i] ? ASKB.toIsoZ(d.chosen.parsed[i]) : null;
+      } else if (k === 'enum') {
+        rec[f] = d.chosen.map[raw] || null;
+      } else if (k === 'id') {
+        rec[f] = raw === undefined || raw === null || String(raw).trim() === '' ? null : String(raw).trim();
+      } else {
+        var v = d.chosen.converted ? d.chosen.converted[i] : null;
+        rec[f] = v === null ? null : ASKB.round(v, 3);
+      }
+    });
+    if (!rec.machine_id) rec.machine_id = run.dataset.equipment || null;
+    /* 시각 컬럼이 없는 반입 데이터: 기준 시각 + 행 간격으로 채우고 합성임을 표시한다 */
+    if (!rec.timestamp && run.dataset.timeBase) {
+      var base = new Date(run.dataset.timeBase).getTime();
+      rec.timestamp = ASKB.toIsoZ(new Date(base + i * (run.dataset.timeStepSec || 60) * 1000));
+      rec.__synthetic_time = true;
+    }
+    if (extras.length) {
+      rec.__extra = {};
+      extras.forEach(function (e) { rec.__extra[e.header] = rows[i][e.index]; });
+    }
+    rec.__source = run.dataset.company;
+    out.push(rec);
+  }
+  return out;
+};
+
+/* ---------------------------------------------------------------------------
+   매핑 사전 — 승인이 곧 적립이다. 같은 설비를 다시 처리하면 질문이 줄어든다.
+   --------------------------------------------------------------------------- */
+ASKB.signature = function (equipment, header) {
+  return (equipment || 'UNKNOWN') + '::' + ASKB.norm(header);
+};
+
+ASKB.commitToDictionary = function (dict, run, approver) {
+  var added = 0, updated = 0;
+  var stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  run.decisions.forEach(function (d) {
+    if (d.status !== 'auto' && d.status !== 'approved') return;
+    if (!d.field || !d.chosen) return;
+    var sig = ASKB.signature(run.dataset.equipment, d.header);
+    var entry = {
+      signature: sig, equipment: run.dataset.equipment, header: d.header, field: d.field,
+      unit: d.chosen.kind === 'num' ? d.chosen.unit : null,
+      unitLabel: d.chosen.unitLabel,
+      enumMap: d.chosen.kind === 'enum' ? d.chosen.map : null,
+      timeFormat: d.chosen.kind === 'time' ? d.chosen.unit : null,
+      timezone: d.proposal.timezone || null,
+      mdRange: d.proposal.mdRange || null,
+      approvedBy: approver || '품질담당자', approvedAt: stamp,
+      uses: dict[sig] ? (dict[sig].uses || 1) + 1 : 1,
+      company: run.dataset.company
+    };
+    if (dict[sig]) updated++; else added++;
+    dict[sig] = entry;
+  });
+  return { added: added, updated: updated };
+};
+
+/* ============================================================================
+   CSV 파서 + 시연용 데이터셋
+   ========================================================================== */
+
+ASKB.parseCsv = function (text) {
+  var s = String(text || '').replace(/^\uFEFF/, '');
+  var rows = [], row = [], cur = '', q = false, i, c, nx;
+  for (i = 0; i < s.length; i++) {
+    c = s[i]; nx = s[i + 1];
+    if (q) {
+      if (c === '"' && nx === '"') { cur += '"'; i++; }
+      else if (c === '"') { q = false; }
+      else { cur += c; }
+    } else {
+      if (c === '"') { q = true; }
+      else if (c === ',') { row.push(cur.trim()); cur = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(cur.trim()); rows.push(row); row = []; cur = ''; }
+      else { cur += c; }
+    }
+  }
+  if (cur.length || row.length) { row.push(cur.trim()); rows.push(row); }
+  rows = rows.filter(function (r) { return r.length > 1 || (r.length === 1 && r[0] !== ''); });
+  if (!rows.length) return { headers: [], rows: [] };
+  return { headers: rows[0], rows: rows.slice(1) };
+};
+
+ASKB.toCsv = function (headers, rows) {
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    var s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  return headers.join(',') + '\n' + rows.map(function (r) {
+    return headers.map(function (h) { return esc(r[h]); }).join(',');
+  }).join('\n');
+};
+
+/* --------------------------------------------------------------------------
+   시연용 데이터셋 6종
+   A·B·C사의 첫 행은 슬라이드와 같은 '같은 사실'이다 — 표기만 세 가지다.
+   ------------------------------------------------------------------------ */
+ASKB.SAMPLES = [
+  {
+    id: 'A',
+    company: 'A사 (한빛열처리)',
+    short: 'A사',
+    equipment: 'HT-2400',
+    note: '국내 열처리 라인. 컬럼명은 한글, 온도는 소수점을 없애려 10배 정수로 저장.',
+    csv: [
+      '시각,설비,온도*10(°C),판정',
+      '2026-08-10 14:23,HT-2400,1874,OK',
+      '2026-08-10 14:24,HT-2400,1881,OK',
+      '2026-08-10 14:25,HT-2400,1902,OK',
+      '2026-08-10 14:26,HT-2400,1868,OK',
+      '2026-08-10 14:27,HT-2400,2251,NG',
+      '2026-08-10 14:28,HT-2400,2340,NG',
+      '2026-08-10 14:29,HT-2400,1996,OK',
+      '2026-08-10 14:30,HT-2400,1912,OK',
+      '2026-08-10 14:31,HT-2400,1889,OK',
+      '2026-08-10 14:32,HT-2400,1451,NG',
+      '2026-08-10 14:33,HT-2400,1877,OK',
+      '2026-08-10 14:34,HT-2400,1905,OK'
+    ].join('\n'),
+    md: [
+      '# A사 열처리로 HT-2400',
+      '타임존: Asia/Seoul',
+      '정상 운전 범위: 150 ~ 220 °C',
+      '',
+      '## 컬럼 정의',
+      '- `시각`: 설비 PLC 기록 시각. 타임존: Asia/Seoul, 형식: YYYY-MM-DD HH:mm',
+      '- `설비`: 호기 식별자. 표준 필드: machine_id',
+      '- `온도*10(°C)`: 노 내부 공정 온도. 단위: °C×10 (소수점 제거용 정수 저장). 표준 필드: process_temp_c. 정상 운전 범위: 150 ~ 220',
+      '- `판정`: 열처리 판정. OK=정상, NG=불량. 표준 필드: verdict'
+    ].join('\n')
+  },
+  {
+    id: 'B',
+    company: 'B사 (대성정밀)',
+    short: 'B사',
+    equipment: 'HT-2400',
+    note: '같은 설비 모델이지만 컬럼명은 영문 약어, 시각은 미국식, 온도는 화씨 10배.',
+    csv: [
+      'TIME,MACHINE,TEMP1,RESULT',
+      '08/10/26 2:23PM,HT-2400,3693,1',
+      '08/10/26 2:24PM,HT-2400,3705,1',
+      '08/10/26 2:25PM,HT-2400,3688,1',
+      '08/10/26 2:26PM,HT-2400,3742,1',
+      '08/10/26 2:27PM,HT-2400,4461,0',
+      '08/10/26 2:28PM,HT-2400,3671,1',
+      '08/10/26 2:29PM,HT-2400,3699,1',
+      '08/10/26 2:30PM,HT-2400,2905,0',
+      '08/10/26 2:31PM,HT-2400,3717,1',
+      '08/10/26 2:32PM,HT-2400,3684,1',
+      '08/10/26 2:33PM,HT-2400,4520,0',
+      '08/10/26 2:34PM,HT-2400,3702,1'
+    ].join('\n'),
+    md: [
+      '# B사 열처리로 HT-2400 (3호기)',
+      '타임존: Asia/Seoul',
+      '정상 운전 범위: 150 ~ 220 °C',
+      '',
+      '## 컬럼 정의',
+      '- `TIME`: 로컬 기록 시각. 타임존: Asia/Seoul, 형식: MM/DD/YY h:mm AM/PM',
+      '- `MACHINE`: 설비 코드. 표준 필드: machine_id',
+      '- `TEMP1`: 노 중앙 상부 PT100 공정 온도. 단위: °F×10. 표준 필드: process_temp_c. 정상 운전 범위: 150 ~ 220',
+      '- `RESULT`: 열처리 판정. 1=정상, 0=불량. 표준 필드: verdict'
+    ].join('\n')
+  },
+  {
+    id: 'C',
+    company: 'C사 (신성열처리)',
+    short: 'C사',
+    equipment: 'HT-2400',
+    note: '시각은 점 구분 두 자리 연도, 온도는 화씨 실수, 판정은 불량 여부 Y/N.',
+    csv: [
+      '일시,설비명,노온도(°F),불량',
+      '26.8.10 14:23,HT-2400,369.3,N',
+      '26.8.10 14:24,HT-2400,371.2,N',
+      '26.8.10 14:25,HT-2400,368.5,N',
+      '26.8.10 14:26,HT-2400,445.8,Y',
+      '26.8.10 14:27,HT-2400,372.4,N',
+      '26.8.10 14:28,HT-2400,370.1,N',
+      '26.8.10 14:29,HT-2400,288.6,Y',
+      '26.8.10 14:30,HT-2400,369.9,N',
+      '26.8.10 14:31,HT-2400,373.5,N',
+      '26.8.10 14:32,HT-2400,371.0,N',
+      '26.8.10 14:33,HT-2400,451.2,Y',
+      '26.8.10 14:34,HT-2400,368.8,N'
+    ].join('\n'),
+    md: [
+      '# C사 열처리로 HT-2400',
+      '타임존: Asia/Seoul',
+      '정상 운전 범위: 150 ~ 220 °C',
+      '',
+      '## 컬럼 정의',
+      '- `일시`: 기록 시각. 타임존: Asia/Seoul, 형식: YY.M.D HH:mm',
+      '- `설비명`: 설비 식별자. 표준 필드: machine_id',
+      '- `노온도(°F)`: 노 내부 공정 온도. 단위: °F. 표준 필드: process_temp_c. 정상 운전 범위: 150 ~ 220',
+      '- `불량`: 불량 여부. Y=불량, N=정상. 표준 필드: verdict'
+    ].join('\n')
+  },
+  {
+    id: 'IIOT',
+    company: 'D사 (공개 데이터 반입)',
+    short: 'D사',
+    equipment: 'IIOT-LINE-01',
+    note: 'Kaggle "IIoT Sensor Data for Predictive Maintenance" 형식. 컬럼명 temperature 하나로는 어느 지점인지 알 수 없다.',
+    timeBase: '2026-08-10T00:00:00Z',
+    timeStepSec: 60,
+    csv: [
+      'temperature,vibration,pressure,machine_failure',
+      '77.48357077,0.639936,27.97447,1',
+      '74.30867849,0.592463,29.56644,1',
+      '78.23844269,0.505963,27.62274,1',
+      '82.61514928,0.435306,29.07612,1',
+      '73.82923313,0.569822,24.31916,1',
+      '73.82931522,0.539349,30.63988,1',
+      '82.89606408,0.589519,30.00362,1',
+      '78.83717365,0.563517,27.54873,1',
+      '72.65262807,0.604955,31.97774,1',
+      '77.71280022,0.446476,32.81271,0',
+      '72.68291154,0.631739,25.17732,1',
+      '72.67135123,0.51976,27.71183,0',
+      '76.20981136,0.707526,27.69257,1',
+      '65.43359878,0.431081,27.18029,1',
+      '66.37541084,0.673596,32.48842,0'
+    ].join('\n'),
+    md: [
+      '# D사 반입 데이터 — IIoT 예지보전 센서셋',
+      '시각 컬럼이 없습니다. 행 순서가 1분 간격 측정입니다.',
+      '',
+      '## 컬럼 정의',
+      '- `temperature`: 구동 모터 표면 온도. 단위: °C. 표준 필드: component_temp_c',
+      '- `vibration`: 베어링 진동 실효값. 단위: mm/s. 표준 필드: vibration_mm_s',
+      '- `machine_failure`: 설비 상태 플래그. 1=정상, 0=불량. 표준 필드: verdict',
+      '',
+      '※ pressure 항목은 사내 설명서에 아직 정의되어 있지 않습니다.'
+    ].join('\n')
+  },
+  {
+    id: 'AI4I',
+    company: 'E사 (공개 데이터 반입)',
+    short: 'E사',
+    equipment: 'AI4I-MILL-01',
+    note: 'Kaggle "AI4I 2020 Predictive Maintenance" 형식. 온도는 켈빈, 판정 극성은 D사와 정반대다.',
+    timeBase: '2026-08-10T00:00:00Z',
+    timeStepSec: 60,
+    csv: [
+      'UDI,Product ID,Type,Air temperature [K],Process temperature [K],Rotational speed [rpm],Torque [Nm],Tool wear [min],Machine failure',
+      '1,M14860,M,298.1,308.6,1551,42.8,0,0',
+      '2,L47181,L,298.2,308.7,1408,46.3,3,0',
+      '3,L47182,L,298.1,308.5,1498,49.4,5,0',
+      '4,L47183,L,298.2,308.6,1433,39.5,7,0',
+      '5,L47184,L,298.2,308.7,1408,40.0,9,0',
+      '6,M14865,M,298.1,308.6,1425,41.9,11,0',
+      '7,L47186,L,298.1,308.6,1558,42.4,14,0',
+      '8,L47187,L,298.1,308.6,1527,40.2,16,0',
+      '9,M14868,M,298.3,308.7,1667,28.6,18,0',
+      '10,M14869,M,298.5,309.0,1741,28.0,21,0',
+      '11,H29424,H,298.4,308.9,1782,23.9,24,0',
+      '12,H29425,H,298.6,309.1,1423,44.3,29,0',
+      '13,L47192,L,298.6,309.1,1339,51.1,34,0',
+      '14,M14872,M,298.6,309.2,1742,30.0,37,0',
+      '15,L47194,L,298.9,309.5,1382,48.9,206,1',
+      '16,L47195,L,299.0,309.8,1412,52.3,210,0',
+      '17,M14875,M,299.1,310.0,1398,55.1,214,1',
+      '18,L47197,L,298.8,309.6,1355,49.8,218,0'
+    ].join('\n'),
+    md: [
+      '# E사 반입 데이터 — AI4I 2020 예지보전 셋',
+      '시각 컬럼이 없습니다. 행 순서가 1분 간격 측정입니다.',
+      '',
+      '## 컬럼 정의',
+      '- `UDI`: 행 번호. 표준 필드: 제외',
+      '- `Product ID`: 제품 식별자. 표준 필드: machine_id',
+      '- `Type`: 제품 등급(L/M/H). 표준 필드: 보존',
+      '- `Air temperature [K]`: 설비 주변 대기 온도. 단위: K. 표준 필드: ambient_temp_c',
+      '- `Process temperature [K]`: 가공점 공정 온도. 단위: K. 표준 필드: process_temp_c',
+      '- `Rotational speed [rpm]`: 스핀들 회전 속도. 단위: rpm. 표준 필드: rotational_speed_rpm',
+      '- `Torque [Nm]`: 스핀들 토크. 단위: N·m. 표준 필드: torque_nm',
+      '- `Tool wear [min]`: 공구 누적 사용 시간. 단위: min. 표준 필드: tool_wear_min',
+      '- `Machine failure`: 고장 플래그. 0=정상, 1=불량. 표준 필드: verdict'
+    ].join('\n')
+  },
+  {
+    id: 'B2',
+    company: 'B사 (대성정밀)',
+    short: 'B사 2차',
+    equipment: 'HT-2400',
+    batch: 2,
+    note: '같은 설비, 같은 컬럼 구성의 다음 날 배치. 매핑 사전이 적립되어 있으면 물어볼 것이 없다.',
+    csv: [
+      'TIME,MACHINE,TEMP1,RESULT',
+      '08/11/26 9:02AM,HT-2400,3688,1',
+      '08/11/26 9:03AM,HT-2400,3701,1',
+      '08/11/26 9:04AM,HT-2400,3695,1',
+      '08/11/26 9:05AM,HT-2400,4489,0',
+      '08/11/26 9:06AM,HT-2400,3712,1',
+      '08/11/26 9:07AM,HT-2400,3679,1',
+      '08/11/26 9:08AM,HT-2400,3708,1',
+      '08/11/26 9:09AM,HT-2400,2871,0',
+      '08/11/26 9:10AM,HT-2400,3697,1',
+      '08/11/26 9:11AM,HT-2400,3720,1'
+    ].join('\n'),
+    md: [
+      '# B사 열처리로 HT-2400 (3호기)',
+      '타임존: Asia/Seoul',
+      '정상 운전 범위: 150 ~ 220 °C',
+      '',
+      '## 컬럼 정의',
+      '- `TIME`: 로컬 기록 시각. 타임존: Asia/Seoul, 형식: MM/DD/YY h:mm AM/PM',
+      '- `MACHINE`: 설비 코드. 표준 필드: machine_id',
+      '- `TEMP1`: 노 중앙 상부 PT100 공정 온도. 단위: °F×10. 표준 필드: process_temp_c. 정상 운전 범위: 150 ~ 220',
+      '- `RESULT`: 열처리 판정. 1=정상, 0=불량. 표준 필드: verdict'
+    ].join('\n')
+  }
+];
+
+ASKB.loadSample = function (id) {
+  var s = null;
+  ASKB.SAMPLES.forEach(function (x) { if (x.id === id) s = x; });
+  if (!s) return null;
+  var p = ASKB.parseCsv(s.csv);
+  return {
+    id: s.id, company: s.company, short: s.short, equipment: s.equipment, note: s.note,
+    md: s.md, headers: p.headers, rows: p.rows, batch: s.batch || 1,
+    timeBase: s.timeBase || null, timeStepSec: s.timeStepSec || 60
+  };
+};
+
+/* ============================================================================
+   공유 계층 — 표준화된 데이터를 기업끼리 합치는 규칙
+   ----------------------------------------------------------------------------
+   원칙 세 가지
+   · 올릴 범위는 기업이 정한다 (필드 단위 선택)
+   · 기본값은 자사 불량률이 역산되지 않는 단위다 (판정은 익명 풀로만 발행)
+   · 표본이 너무 적으면 자동 보류한다 (재식별 위험)
+   ========================================================================== */
+
+ASKB.SHARE_MODES = {
+  pooled: {
+    label: '익명 풀 발행 (기본)',
+    desc: '판정을 함께 올리되 기업 식별자를 지우고 다른 기업 행과 섞어 발행합니다. 자사 불량률을 역산할 수 없습니다.'
+  },
+  partner: {
+    label: '파트너 식별 발행',
+    desc: '고정 익명 코드(PT-01 등)를 유지합니다. 상대가 코드별 불량률을 계산할 수 있습니다.'
+  },
+  sensor_only: {
+    label: '센서값만',
+    desc: '판정을 올리지 않습니다. 불량 사례 학습에는 기여하지 못합니다.'
+  }
+};
+
+ASKB.defaultShareSetting = function () {
+  var fields = {};
+  ASKB.SCHEMA_ORDER.forEach(function (f) { fields[f] = true; });
+  return { fields: fields, mode: 'pooled', minRows: 10, enabled: true };
+};
+
+/* 결정적 셔플 — 시연에서 결과가 매번 달라지지 않도록 시드를 쓴다 */
+ASKB.shuffle = function (arr, seed) {
+  var a = arr.slice(), s = seed || 20260810, i, j, t;
+  function rnd() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+  for (i = a.length - 1; i > 0; i--) { j = Math.floor(rnd() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+};
+
+/* 공유 풀 구성 */
+ASKB.buildPool = function (contributions, settings) {
+  var pool = [], held = [], notes = [], partnerCode = {}, pi = 0;
+  var fieldCount = {};
+
+  Object.keys(contributions).forEach(function (cid) {
+    var c = contributions[cid];
+    var st = settings[cid] || ASKB.defaultShareSetting();
+    if (!st.enabled) { held.push({ company: c.company, rows: c.rows.length, reason: '기업이 공유를 중지했습니다' }); return; }
+    if (c.rows.length < st.minRows) {
+      held.push({ company: c.company, rows: c.rows.length,
+        reason: '표본 ' + c.rows.length + '행 < 최소 ' + st.minRows + '행 — 소표본은 되짚어 식별될 수 있어 보류합니다' });
+      return;
+    }
+    pi++; partnerCode[cid] = 'PT-' + String(pi).padStart(2, '0');
+
+    c.rows.forEach(function (r) {
+      var o = {};
+      ASKB.SCHEMA_ORDER.forEach(function (f) {
+        if (!st.fields[f]) return;
+        if (f === 'verdict' && st.mode === 'sensor_only') return;
+        if (r[f] === null || r[f] === undefined) return;
+        o[f] = r[f];
+        fieldCount[f] = (fieldCount[f] || 0) + 1;
+      });
+      o.__origin = cid;
+      o.__label = st.mode === 'partner' ? partnerCode[cid] : '—';
+      o.__synthetic_time = r.__synthetic_time || false;
+      pool.push(o);
+    });
+
+    if (st.mode === 'partner') {
+      notes.push(c.company + ': 파트너 코드 ' + partnerCode[cid] + '를 유지하므로 코드별 불량률이 계산될 수 있습니다.');
+    }
+    if (st.mode === 'sensor_only') {
+      notes.push(c.company + ': 판정을 올리지 않아 불량 사례 학습에는 기여하지 않습니다.');
+    }
+    var off = ASKB.SCHEMA_ORDER.filter(function (f) { return !st.fields[f]; });
+    if (off.length) notes.push(c.company + ': ' + off.join(', ') + ' 미공개');
+  });
+
+  pool = ASKB.shuffle(pool);
+  return { rows: pool, held: held, notes: notes, partnerCode: partnerCode, fieldCount: fieldCount };
+};
+
+/* 풀 품질 요약 — 표준화가 실제로 무엇을 바꿨는지 보여주는 숫자 */
+ASKB.poolSummary = function (pool, contributions) {
+  var byField = {};
+  ASKB.SCHEMA_ORDER.forEach(function (f) {
+    if (ASKB.SCHEMA[f].kind !== 'num') return;
+    var vals = pool.rows.map(function (r) { return r[f]; }).filter(function (v) { return typeof v === 'number'; });
+    if (!vals.length) return;
+    vals.sort(function (a, b) { return a - b; });
+    byField[f] = { n: vals.length, min: vals[0], max: vals[vals.length - 1], median: vals[Math.floor(vals.length / 2)] };
+  });
+  var ok = 0, nok = 0;
+  pool.rows.forEach(function (r) { if (r.verdict === 'OK') ok++; else if (r.verdict === 'NOK') nok++; });
+  var companies = {};
+  pool.rows.forEach(function (r) { companies[r.__origin] = true; });
+  return {
+    rows: pool.rows.length, companies: Object.keys(companies).length,
+    fields: byField, ok: ok, nok: nok,
+    nokRate: (ok + nok) ? nok / (ok + nok) : null,
+    synthetic: pool.rows.filter(function (r) { return r.__synthetic_time; }).length
+  };
+};
+
+/* 표준화하지 않고 그냥 합쳤을 때의 대조군 — 왜 이 작업이 필요한지 보여주는 숫자 */
+ASKB.naiveMerge = function (datasets) {
+  var buckets = {};
+  datasets.forEach(function (ds) {
+    ds.headers.forEach(function (h, ci) {
+      var n = ASKB.norm(h);
+      var isTemp = /온도|temp/.test(n);
+      if (!isTemp) return;
+      var vals = ds.rows.map(function (r) { return Number(r[ci]); }).filter(isFinite);
+      if (!vals.length) return;
+      var key = '온도로 읽히는 컬럼';
+      buckets[key] = buckets[key] || { names: [], min: Infinity, max: -Infinity, n: 0 };
+      buckets[key].names.push(ds.short + '·' + h);
+      buckets[key].n += vals.length;
+      buckets[key].min = Math.min(buckets[key].min, Math.min.apply(null, vals));
+      buckets[key].max = Math.max(buckets[key].max, Math.max.apply(null, vals));
+    });
+  });
+  return buckets;
+};
+
+/* 감사 로그 */
+ASKB.newLog = function () { return []; };
+ASKB.log = function (logArr, kind, msg, who) {
+  logArr.unshift({
+    at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    kind: kind, msg: msg, who: who || '시스템'
+  });
+  return logArr;
+};
+
+/* ============================================================================
+   ④ 사람 확답 — 답을 받으면 ②와 ③을 다시 돌린다.
+   사람이 고른 것도 검증 코드를 건너뛰지 않는다. 기각된 가설을 고르면 그렇다고 남긴다.
+   ========================================================================== */
+
+ASKB.numHypotheses = function (values, field, priors, mdRange) {
+  return priors.map(function (h) {
+    var comp = ASKB.computeHypothesis(values, h.unit);
+    comp.rawValues = values;
+    var cks = ASKB.verifyNumeric(comp, field, mdRange);
+    return {
+      kind: 'num', unit: h.unit, unitLabel: comp.unitLabel, prior: h.prior, why: h.why, from: h.from,
+      sampleIn: comp.sampleIn, sampleOut: comp.sampleOut, sampleFormula: comp.sampleFormula,
+      median: comp.median, min: comp.min, max: comp.max, converted: comp.converted,
+      excursions: comp.excursions, checks: cks,
+      rejected: cks.some(function (c) { return c.level === 'fail'; })
+    };
+  });
+};
+
+ASKB.timeHypotheses = function (values, fmtIds, tz) {
+  return fmtIds.map(function (fid) {
+    var fmt = ASKB.TIME_FORMATS.filter(function (x) { return x.id === fid; })[0];
+    var parsed = values.map(function (v) { return ASKB.parseTime(v, fmt, tz || 'UTC'); });
+    var okCount = parsed.filter(function (x) { return x !== null; }).length;
+    var nonNull = values.filter(function (v) { return String(v || '').trim() !== ''; }).length;
+    var chrono = true, future = 0, prev = null;
+    parsed.forEach(function (p) {
+      if (!p) return;
+      if (prev && p.getTime() < prev.getTime()) chrono = false;
+      prev = p;
+      if (p.getTime() > Date.now() + 86400000) future++;
+    });
+    var cks = [
+      { id: 'PARSE', level: okCount === nonNull ? 'pass' : 'fail', msg: okCount + '/' + nonNull + '건 해석 성공' },
+      { id: 'CHRONO', level: chrono ? 'pass' : 'warn', msg: chrono ? '시간이 역행하지 않음' : '시간이 역행하는 구간이 있음' },
+      { id: 'RANGE', level: future === 0 ? 'pass' : 'fail',
+        msg: future === 0 ? '미래 시각 없음' : future + '건이 미래 시각 — 형식 오판으로 보입니다' }
+    ];
+    return {
+      kind: 'time', unit: fid, unitLabel: fmt.label, prior: 1 / fmtIds.length,
+      why: '전체 행이 ' + fmt.label + ' 형식에 맞습니다',
+      tzPending: !tz && !fmt.utc,
+      sampleIn: values[0], sampleOut: ASKB.toIsoZ(parsed[0]),
+      sampleFormula: fmt.utc ? '이미 UTC 표기'
+        : (tz ? '로컬(' + tz + ', UTC' + (ASKB.TZ_OFFSET[tz] >= 0 ? '+' : '') + ASKB.TZ_OFFSET[tz] + ') → UTC'
+              : '타임존 미선언 — 변환을 확정할 수 없습니다'),
+      parsed: parsed, checks: cks,
+      rejected: cks.some(function (c) { return c.level === 'fail'; })
+    };
+  });
+};
+
+ASKB.refreshUnique = function (d) {
+  var survivors = d.hypotheses.filter(function (h) { return !h.rejected; });
+  d.survivors = survivors.length;
+  d.checks = d.checks.filter(function (c) { return c.id !== 'UNIQUE'; });
+  d.checks.push({
+    id: 'UNIQUE',
+    level: survivors.length === 1 ? 'pass' : (survivors.length === 0 ? 'fail' : 'warn'),
+    msg: survivors.length === 1
+      ? '검증을 통과한 가설이 하나입니다 — ' + survivors[0].unitLabel
+      : survivors.length === 0
+        ? '모든 가설이 기각되었습니다'
+        : survivors.length + '개 가설이 살아남아 데이터만으로는 못 가립니다'
+  });
+  return survivors;
+};
+
+/* ans 예시
+   { field: 'component_temp_c' }        온도 지점 확정
+   { unit: 'degF_x10' }                 단위 확정
+   { tz: 'Asia/Seoul' }                 타임존 선언
+   { timefmt: 'us_12h' }                시각 형식 확정
+   { polarity: {'1':'OK','0':'NOK'} }   판정 극성 확정
+   { declare: 'keep' | 'drop' }         표준 스키마 밖 컬럼 처리
+*/
+ASKB.answerDecision = function (run, d, ans) {
+  var values = d.rawValues;
+  var notes = [];
+
+  if (ans.declare) {
+    d.declared = ans.declare;
+    d.field = null;
+    d.checks = [{ id: 'UNIQUE', level: 'pass',
+      msg: ans.declare === 'drop' ? '사람 확답에 따라 제외' : '사람 확답에 따라 부가정보로 보존' }];
+    d.status = 'approved';
+    d.answeredBy = ans.by || '품질담당자';
+    return { ok: true, note: ans.declare === 'drop' ? '제외로 확정했습니다' : '부가정보 보존으로 확정했습니다' };
+  }
+
+  if (ans.field && ASKB.SCHEMA[ans.field]) {
+    d.field = ans.field;
+    var pool = ASKB.UNIT_POOL[ans.field] || [];
+    var priors = d.hypotheses.length && d.hypotheses[0].kind === 'num'
+      ? d.hypotheses.map(function (h) { return { unit: h.unit, prior: h.prior, why: h.why, from: h.from }; })
+                    .filter(function (h) { return pool.indexOf(h.unit) >= 0; })
+      : ASKB.priorsFromValues(ans.field, d.proposal.stats).filter(function (h) { return pool.indexOf(h.unit) >= 0; });
+    if (!priors.length && pool.length) priors = [{ unit: pool[0], prior: 0.5, why: '기본 단위', from: 'default' }];
+    d.hypotheses = ASKB.numHypotheses(values, ans.field, priors, d.proposal.mdRange);
+    d.proposal.field = ans.field;
+    d.questions = d.questions.filter(function (q) { return q.id !== 'field'; });
+    notes.push('표준 필드를 ' + ans.field + '로 확정하고 물리 범위를 다시 검증했습니다');
+  }
+
+  if (ans.tz) {
+    d.proposal.timezone = ans.tz;
+    var fids = d.hypotheses.map(function (h) { return h.unit; });
+    d.hypotheses = ASKB.timeHypotheses(values, fids, ans.tz);
+    d.questions = d.questions.filter(function (q) { return q.id !== 'tz'; });
+    notes.push('타임존을 ' + ans.tz + '로 선언하고 UTC 변환을 다시 계산했습니다');
+  }
+
+  if (ans.timefmt) {
+    d.hypotheses = ASKB.timeHypotheses(values, [ans.timefmt], d.proposal.timezone);
+    d.questions = d.questions.filter(function (q) { return q.id !== 'timefmt'; });
+    notes.push('시각 형식을 확정했습니다');
+  }
+
+  if (ans.polarity) {
+    var h = d.hypotheses[0];
+    h.map = ans.polarity;
+    h.sampleOut = Object.keys(ans.polarity).map(function (k) { return ans.polarity[k]; }).join(' / ');
+    h.sampleFormula = Object.keys(ans.polarity).map(function (k) { return k + ' → ' + ans.polarity[k]; }).join(' , ');
+    h.checks = h.checks.map(function (c) {
+      if (c.id !== 'POLARITY') return c;
+      return { id: 'POLARITY', level: 'pass', msg: '사람 확답으로 극성 확정 — ' + h.sampleFormula };
+    });
+    h.rejected = h.checks.some(function (c) { return c.level === 'fail'; });
+    d.questions = d.questions.filter(function (q) { return q.id !== 'polarity'; });
+    notes.push('판정 극성을 확정했습니다');
+  }
+
+  var survivors = ASKB.refreshUnique(d);
+  /* 검증 코드가 이미 하나로 좁혔다면 형식은 더 묻지 않는다 */
+  if (d.survivors === 1) d.questions = d.questions.filter(function (q) { return q.id !== 'timefmt'; });
+
+  if (ans.unit) {
+    var pick = null;
+    d.hypotheses.forEach(function (x) { if (x.unit === ans.unit) pick = x; });
+    if (pick) {
+      d.chosen = pick;
+      if (pick.rejected) {
+        d.overridden = true;
+        notes.push('검증에서 기각된 가설을 사람이 골랐습니다 — 감사 로그에 그대로 남습니다');
+      } else {
+        notes.push('단위를 ' + pick.unitLabel + '로 확정했습니다');
+      }
+    }
+  } else if (!d.chosen || d.chosen.rejected) {
+    d.chosen = survivors.length ? survivors[0] : d.hypotheses[0];
+  } else {
+    /* 필드/타임존이 바뀌었으면 같은 단위의 새 가설로 갈아끼운다 */
+    var same = null, want = d.chosen.unit;
+    d.hypotheses.forEach(function (x) { if (x.unit === want) same = x; });
+    d.chosen = same || (survivors.length ? survivors[0] : d.hypotheses[0]);
+  }
+
+  /* 아직 답을 안 한 질문이 남았으면 확답 대기를 유지한다 */
+  var remaining = d.questions.length;
+  var stillAmbiguous = d.survivors > 1 && !ans.unit;
+  var hardFail = d.checks.some(function (c) { return c.level === 'fail'; });
+
+  if (remaining === 0 && !stillAmbiguous && (!hardFail || d.overridden)) {
+    d.status = 'approved';
+    d.answeredBy = ans.by || '품질담당자';
+  } else {
+    d.status = 'queued';
+  }
+
+  return { ok: d.status === 'approved', note: notes.join(' · '), remaining: remaining, survivors: d.survivors };
+};
+
+/* 남은 확답 대기 건수 */
+ASKB.pendingCount = function (run) {
+  return run.decisions.filter(function (d) { return d.status === 'queued'; }).length;
+};
+
 </script>
-</body>
-</html>
+<script>
+/* ============================================================================
+   화면 로직
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------- 저장소 (없어도 동작) */
+  var store = (function () {
+    var mem = {};
+    var ok = false;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('__askb_t', '1'); localStorage.removeItem('__askb_t'); ok = true;
+      }
+    } catch (e) { ok = false; }
+    return {
+      get: function (k) {
+        try { return ok ? localStorage.getItem('askb.' + k) : (mem[k] || null); }
+        catch (e) { return mem[k] || null; }
+      },
+      set: function (k, v) {
+        try { if (ok) { localStorage.setItem('askb.' + k, v); return; } } catch (e) {}
+        mem[k] = v;
+      },
+      clear: function () {
+        try { if (ok) { ['dict', 'log', 'settings'].forEach(function (k) { localStorage.removeItem('askb.' + k); }); } } catch (e) {}
+        mem = {};
+      }
+    };
+  })();
+
+  /* ------------------------------------------------------- 상태 */
+  var S = {
+    view: 'intake',
+    useMd: true,
+    useDict: true,
+    intake: {},
+    runs: {},
+    published: {},
+    dictionary: {},
+    settings: {},
+    log: [],
+    focus: null,
+    requests: [],
+    approver: '품질담당자',
+    mdOpen: {}
+  };
+
+  try {
+    var d = store.get('dict'); if (d) S.dictionary = JSON.parse(d);
+    var g = store.get('log'); if (g) S.log = JSON.parse(g);
+    var st = store.get('settings'); if (st) S.settings = JSON.parse(st);
+  } catch (e) {}
+
+  function persist() {
+    try {
+      store.set('dict', JSON.stringify(S.dictionary));
+      store.set('log', JSON.stringify(S.log.slice(0, 200)));
+      store.set('settings', JSON.stringify(S.settings));
+    } catch (e) {}
+  }
+
+  function logIt(kind, msg, who) { ASKB.log(S.log, kind, msg, who || S.approver); persist(); }
+
+  /* ------------------------------------------------------- 유틸 */
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function $(sel) { return document.querySelector(sel); }
+  function num(v, d) { return v === null || v === undefined ? '—' : ASKB.round(v, d === undefined ? 2 : d); }
+
+  var toastT = null;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 2600);
+  }
+
+  function download(name, text, mime) {
+    var b = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+    var u = URL.createObjectURL(b), a = document.createElement('a');
+    a.href = u; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 400);
+    logIt('내보내기', name + ' 파일을 내려받았습니다');
+  }
+
+  function chk(c) {
+    var nm = ASKB.CHECKS[c.id] || c.id;
+    var mark = c.level === 'pass' ? '✓' : (c.level === 'warn' ? '!' : '✗');
+    return '<span class="chk ' + c.level + '"><b>' + mark + ' ' + esc(nm) + '</b><span>' + esc(c.msg) + '</span></span>';
+  }
+
+  function srcTag(src) {
+    if (src === 'md') return '<span class="tag t">설명서 근거</span>';
+    if (src === 'dict') return '<span class="tag dark">사전 적중</span>';
+    return '<span class="tag n">값·이름 추론</span>';
+  }
+
+  /* ------------------------------------------------------- 파이프라인 실행 */
+  function runFor(id) {
+    var ds = S.intake[id]; if (!ds) return null;
+    var run = ASKB.runPipeline(ds, {
+      useMd: S.useMd, dictionary: S.dictionary, useDictionary: S.useDict
+    });
+    S.runs[id] = run;
+    return run;
+  }
+  function runAll() { Object.keys(S.intake).forEach(runFor); }
+
+  function pipeStats(run) {
+    var hyp = 0, cks = 0, rej = 0, md = 0, dict = 0, inf = 0;
+    run.decisions.forEach(function (d) {
+      hyp += d.hypotheses.length;
+      cks += d.checks.length;
+      d.hypotheses.forEach(function (h) { cks += (h.checks || []).length; if (h.rejected) rej++; });
+      if (d.source === 'md') md++; else if (d.source === 'dict') dict++; else inf++;
+    });
+    return { hyp: hyp, cks: cks, rej: rej, md: md, dict: dict, inf: inf };
+  }
+
+  /* =========================================================================
+     ① 반입
+     ======================================================================= */
+  function viewIntake() {
+    var cards = ASKB.SAMPLES.map(function (s) {
+      var inn = !!S.intake[s.id];
+      var p = ASKB.parseCsv(s.csv);
+      return '' +
+      '<div class="dscard ' + (inn ? 'sel' : '') + '">' +
+        '<div class="top"><span class="co">' + esc(s.company) + '</span>' +
+          '<span class="tag n">설비 ' + esc(s.equipment) + '</span>' +
+          (s.batch ? '<span class="tag a">' + s.batch + '차 배치</span>' : '') +
+          (inn ? '<span class="tag t">반입됨</span>' : '') + '</div>' +
+        '<div class="nt">' + esc(s.note) + '</div>' +
+        '<div class="hdrs">' + p.headers.map(function (h) { return '<code>' + esc(h) + '</code>'; }).join('') + '</div>' +
+        '<div class="row" style="margin-top:2px">' +
+          '<button class="btn ' + (inn ? '' : 'pri') + ' sm" data-act="intake" data-id="' + s.id + '">' +
+            (inn ? '다시 반입' : '반입하기') + '</button>' +
+          '<span class="mono" style="font-size:11px;color:var(--muted-2)">' + p.rows.length + '행 · ' + p.headers.length + '열</span>' +
+          (s.md ? '<button class="btn sm" data-act="peekmd" data-id="' + s.id + '">설명서 보기</button>' : '') +
+        '</div>' +
+        (S.mdOpen['peek' + s.id] ? '<textarea rows="9" readonly>' + esc(s.md) + '</textarea>' : '') +
+      '</div>';
+    }).join('');
+
+    var raw = '';
+    if (S.focus && S.intake[S.focus]) {
+      var ds = S.intake[S.focus];
+      raw = '<div class="sec"><h3>반입된 원본 <span class="hint">' + esc(ds.company) + ' · 손대지 않은 그대로</span></h3>' +
+        '<div class="panel flush"><div class="tblwrap"><table class="raw"><thead><tr>' +
+        ds.headers.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        ds.rows.slice(0, 14).map(function (r) {
+          return '<tr>' + r.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>';
+        }).join('') +
+        '</tbody></table></div></div></div>';
+    }
+
+    return '' +
+    '<div class="eyebrow">① 각자 올린다</div>' +
+    '<h2>공장 원본을 그대로 반입합니다.</h2>' +
+    '<p class="lede">형식을 맞춰 오라고 요구하지 않습니다. 컬럼명도 단위도 날짜 형식도 제각각인 채로 올리면 됩니다. ' +
+      '맞추는 일은 다음 단계에서 우리가 합니다.</p>' +
+    '<div class="sec"><h3>시연용 데이터셋 <span class="hint">앞의 세 곳은 같은 설비 모델, 뒤의 두 곳은 공개 데이터 반입</span></h3>' +
+      '<div class="grid g2">' + cards + '</div></div>' +
+    '<div class="sec"><h3>내 파일 올리기 <span class="hint">CSV 한 개 + 설비 설명서(.md) 선택</span></h3>' +
+      '<div class="panel"><div class="grid g2">' +
+        '<div><label style="font-size:11.5px;font-weight:700;color:var(--muted)">기업명</label><br>' +
+          '<input type="text" id="upCo" placeholder="예: F사 (○○정밀)" style="width:100%;margin-top:4px"></div>' +
+        '<div><label style="font-size:11.5px;font-weight:700;color:var(--muted)">설비 식별자</label><br>' +
+          '<input type="text" id="upEq" placeholder="예: HT-2400" style="width:100%;margin-top:4px"></div>' +
+      '</div>' +
+      '<div class="row" style="margin-top:12px">' +
+        '<input type="file" id="upCsv" accept=".csv,.txt">' +
+        '<input type="file" id="upMd" accept=".md,.txt">' +
+        '<button class="btn pri" data-act="upload">반입하기</button>' +
+      '</div>' +
+      '<div class="note" style="margin-top:12px">설명서는 없어도 반입됩니다. 없으면 다음 단계에서 물어볼 것이 그만큼 늘어납니다.</div>' +
+      '</div></div>' +
+    raw +
+    (Object.keys(S.intake).length
+      ? '<div class="row" style="margin-top:22px"><button class="btn dark" data-act="go" data-v="std">표준화 단계로 →</button></div>'
+      : '');
+  }
+
+  /* =========================================================================
+     ② 표준화
+     ======================================================================= */
+  function trackHtml(id, d, i) {
+    var sc = d.field ? ASKB.SCHEMA[d.field] : null;
+    var cls = d.status === 'queued' ? 'q' : (d.status === 'auto' || d.status === 'approved' ? 'ap' : '');
+    var statusTag = d.status === 'auto' ? '<span class="tag t">자동 통과</span>'
+      : d.status === 'approved' ? '<span class="tag t">사람 확답 완료</span>'
+      : '<span class="tag a">확답 대기</span>';
+
+    /* ① 추측 */
+    var s1 = '<div class="step"><div class="lab"><b>① 추측</b><i>LLM · 계산 안 함</i></div><div class="bd">' +
+      d.proposal.evidence.map(function (e) { return '<div class="ev">' + esc(e) + '</div>'; }).join('') +
+      (d.proposal.fieldAlternatives && d.proposal.fieldAlternatives.length
+        ? '<div class="ev dim">다른 후보: ' + d.proposal.fieldAlternatives.join(', ') + '</div>' : '') +
+      '<div class="ev dim">표본 ' + d.proposal.stats.n + '행 · 관측 ' + d.proposal.stats.distinctCount + '종' +
+        (d.proposal.stats.isNumeric ? ' · 최소 ' + num(d.proposal.stats.min, 3) + ' 최대 ' + num(d.proposal.stats.max, 3) : '') +
+        ' · 확신도 ' + Math.round(d.proposal.fieldConfidence * 100) + '%</div>' +
+      '</div></div>';
+
+    /* ②③ 계산 + 검증 */
+    var lanes = d.hypotheses.map(function (h) {
+      var isChosen = d.chosen === h;
+      return '<div class="lane ' + (h.rejected ? 'rej' : '') + '">' +
+        '<div class="lh"><span class="u">' + esc(h.unitLabel) + '</span>' +
+          (h.from === 'counterexample' ? '<span class="tag c">반례</span>' : '') +
+          (isChosen && !h.rejected ? '<span class="stamp ok">채택</span>' : '') +
+          (h.rejected ? '<span class="stamp">기각</span>' : '') +
+          '<span class="why">' + esc(h.why) + '</span></div>' +
+        '<div class="calc">' +
+          (h.kind === 'num' ? '' : '<span class="in">' + esc(h.sampleIn) + '</span><span class="eq">→</span>') +
+          esc(h.sampleFormula) +
+          '<span class="eq">=</span><span class="out">' + esc(h.sampleOut) +
+          (h.kind === 'num' && sc ? ' ' + sc.unit : '') + '</span></div>' +
+        (h.tzPending ? '<div class="ev dim" style="color:var(--clay)">타임존이 선언되지 않아 이 값은 확정된 변환이 아닙니다.</div>' : '') +
+        '<div class="chks">' + (h.checks || []).map(chk).join('') + '</div>' +
+      '</div>';
+    }).join('');
+
+    var s23 = '<div class="step"><div class="lab"><b>② 계산 · ③ 검증</b><i>결정적 코드</i></div><div class="bd">' +
+      (lanes || '<div class="ev dim">계산할 가설이 없습니다.</div>') +
+      '<div class="chks col">' + d.checks.map(chk).join('') + '</div>' +
+      '</div></div>';
+
+    /* ④ 사람 */
+    var qs = d.questions.map(function (q) {
+      var acts = '';
+      if (q.id === 'field') {
+        acts = q.options.map(function (o) {
+          return '<button class="btn sm" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="field" data-v="' + o + '">' +
+            o + '<span style="font-weight:400;color:var(--muted)"> · ' + esc(ASKB.SCHEMA[o].desc.split('—')[1] || '') + '</span></button>';
+        }).join('');
+      } else if (q.id === 'polarity') {
+        var ks = q.keys;
+        var opt1 = {}, opt2 = {};
+        ks.forEach(function (k) {
+          var truthy = ['1', 'y', 'yes', 'true', 't'].indexOf(String(k).toLowerCase()) >= 0;
+          opt1[k] = truthy ? 'OK' : 'NOK'; opt2[k] = truthy ? 'NOK' : 'OK';
+        });
+        acts =
+          '<button class="btn sm" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="polarity" data-v="' + esc(JSON.stringify(opt1)) + '">' +
+            ks.map(function (k) { return k + '=' + opt1[k]; }).join(' · ') + '</button>' +
+          '<button class="btn sm" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="polarity" data-v="' + esc(JSON.stringify(opt2)) + '">' +
+            ks.map(function (k) { return k + '=' + opt2[k]; }).join(' · ') + '</button>';
+        if (d.polarityHint) {
+          acts += '<div class="note good" style="margin-top:8px;width:100%">근거: ' + esc(d.polarityHint.msg) + '</div>';
+        }
+      } else if (q.id === 'tz' || q.id === 'timefmt') {
+        acts = q.options.map(function (o, oi) {
+          return '<button class="btn sm" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="' + q.id + '" data-v="' + esc(o) + '">' +
+            esc(q.labels ? q.labels[oi] : o) + '</button>';
+        }).join('');
+      } else if (q.id === 'unmapped') {
+        acts =
+          '<button class="btn sm" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="declare" data-v="keep">부가정보로 보존</button>' +
+          '<button class="btn sm dgr" data-act="ans" data-id="' + id + '" data-i="' + i + '" data-k="declare" data-v="drop">제외</button>';
+      } else {
+        acts = '<span class="ev dim">' + esc(q.label) + '</span>';
+      }
+      return '<div class="qbox"><div class="ql">' + esc(q.label) + '</div>' +
+        (q.why ? '<div class="qw">' + esc(q.why) + '</div>' : '') +
+        '<div class="qa">' + acts + '</div></div>';
+    }).join('');
+
+    var needPick = d.survivors > 1 && !d.questions.length;
+    var pick = '';
+    if (d.status === 'queued' && (needPick || d.survivors === 0)) {
+      pick = '<div class="qbox"><div class="ql">' +
+        (d.survivors === 0 ? '검증을 통과한 가설이 없습니다. 단위를 알려주세요.' : '검증만으로는 못 가립니다. 어느 단위입니까?') +
+        '</div><div class="qw">' + (d.survivors === 0
+          ? '기각된 가설을 그대로 쓰겠다고 고르면 그 사실이 감사 로그에 남습니다.'
+          : '살아남은 가설 ' + d.survivors + '개가 모두 물리적으로 말이 됩니다. 설비를 아는 사람만 답할 수 있습니다.') +
+        '</div><div class="qa">' + d.hypotheses.map(function (h) {
+          return '<button class="btn sm ' + (h.rejected ? 'dgr' : '') + '" data-act="ans" data-id="' + id + '" data-i="' + i +
+            '" data-k="unit" data-v="' + esc(h.unit) + '">' + esc(h.unitLabel) + ' → ' + esc(h.sampleOut) +
+            (h.rejected ? ' (기각됨)' : '') + '</button>';
+        }).join('') + '</div></div>';
+    }
+
+    var s4 = '<div class="step"><div class="lab"><b>④ 사람</b><i>확답</i></div><div class="bd">' +
+      qs + pick +
+      (d.status === 'queued'
+        ? '<div class="row"><button class="btn dgr sm" data-act="excl" data-id="' + id + '" data-i="' + i + '">이 컬럼 제외</button></div>'
+        : '<div class="ev dim">' +
+            (d.status === 'auto'
+              ? '물어볼 것이 없어 그대로 통과했습니다. 사람 시간을 쓰지 않았습니다.'
+              : esc((d.answeredBy || S.approver) + '가 확답했습니다.')) +
+            (d.overridden ? ' <span class="tag c">검증 기각 가설을 강제 채택</span>' : '') +
+          '</div>') +
+      '</div></div>';
+
+    return '<div class="track ' + cls + '">' +
+      '<div class="th"><span class="src">' + esc(d.header) + '</span><span class="arw">→</span>' +
+        (d.field ? '<span class="dst">' + d.field + '</span><span class="unit">' + esc(sc.unit) + '</span>'
+                 : '<span class="dst" style="color:var(--muted)">' + (d.declared === 'drop' ? '제외' : d.declared === 'keep' ? '부가정보' : '미매핑') + '</span>') +
+        '<span class="sp"></span>' + srcTag(d.source) + statusTag + '</div>' +
+      s1 + s23 + s4 + '</div>';
+  }
+
+  function viewStd() {
+    var ids = Object.keys(S.intake);
+    if (!ids.length) {
+      return '<div class="eyebrow">② 표준으로 옮긴다</div><h2>먼저 데이터를 반입해 주세요.</h2>' +
+        '<div class="empty" style="margin-top:20px"><b>반입된 데이터가 없습니다</b>' +
+        '반입 단계에서 시연용 데이터셋을 하나 이상 올리면 여기서 표준화가 돌아갑니다.' +
+        '<div style="margin-top:14px"><button class="btn pri" data-act="go" data-v="intake">반입 단계로</button></div></div>';
+    }
+    if (!S.focus || !S.intake[S.focus]) S.focus = ids[0];
+    var run = S.runs[S.focus] || runFor(S.focus);
+    var ps = pipeStats(run);
+    var pend = ASKB.pendingCount(run);
+    var ds = S.intake[S.focus];
+
+    var tabs = ids.map(function (id) {
+      var r = S.runs[id] || runFor(id);
+      var p = ASKB.pendingCount(r);
+      return '<button class="btn sm ' + (id === S.focus ? 'dark' : '') + '" data-act="focus" data-id="' + id + '">' +
+        esc(S.intake[id].short) + (p ? ' <b style="color:' + (id === S.focus ? '#F0B860' : 'var(--amber)') + '">' + p + '</b>' : ' ✓') +
+        '</button>';
+    }).join('');
+
+    return '' +
+    '<div class="eyebrow">② 표준으로 옮긴다</div>' +
+    '<h2>추측은 AI가, 계산은 계산기가, 확인은 코드가, 확답은 사람이.</h2>' +
+    '<p class="lede">숫자 하나가 네 단계를 지나갑니다. LLM은 의미를 제안할 뿐이고 산수에는 손대지 않습니다. ' +
+      '변환은 결정적 코드가 하고, 그 결과가 말이 되는지는 검증 코드가 기각으로 답합니다.</p>' +
+
+    '<div class="sec"><div class="row" style="justify-content:space-between">' +
+      '<div class="row">' + tabs + '</div>' +
+      '<div class="row">' +
+        '<label class="sw"><input type="checkbox" data-act="togmd" ' + (S.useMd ? 'checked' : '') + '>설비 설명서 첨부</label>' +
+        '<label class="sw"><input type="checkbox" data-act="togdict" ' + (S.useDict ? 'checked' : '') + '>매핑 사전 사용</label>' +
+      '</div></div></div>' +
+
+    '<div class="sec"><div class="pipebar">' +
+      '<div><div class="k">① 추측</div><div class="v">' + run.decisions.length + '</div>' +
+        '<div class="d">컬럼 ' + run.decisions.length + '개 · 설명서 근거 ' + ps.md + ' · 사전 적중 ' + ps.dict + ' · 추론 ' + ps.inf + '</div></div>' +
+      '<div><div class="k">② 계산</div><div class="v">' + ps.hyp + '</div>' +
+        '<div class="d">가설 ' + ps.hyp + '개를 결정적 코드로 전량 변환</div></div>' +
+      '<div><div class="k">③ 검증</div><div class="v">' + ps.cks + '</div>' +
+        '<div class="d">검사 ' + ps.cks + '건 실행 · 가설 ' + ps.rej + '개 기각</div></div>' +
+      '<div><div class="k">④ 사람</div><div class="v">' + pend + '</div>' +
+        '<div class="d">' + (pend ? '확답이 필요한 컬럼 ' + pend + '개' : '물어볼 것이 없습니다') + '</div></div>' +
+    '</div></div>' +
+
+    (run.missing.length
+      ? '<div class="sec"><div class="note warn">필수 표준 필드 <b>' + run.missing.join(', ') + '</b>에 대응하는 컬럼이 없습니다.' +
+        (ds.timeBase ? ' 이 데이터셋은 시각 컬럼이 없어 기준 시각 <span class="mono">' + esc(ds.timeBase) +
+          '</span>에서 ' + ds.timeStepSec + '초 간격으로 채웁니다. 발행된 행에는 합성 시각임이 표시됩니다.' : '') +
+        '</div></div>' : '') +
+
+    '<div class="sec"><h3>설비 설명서 <span class="hint">' + (S.useMd
+      ? '이 문서가 ①의 모호함을 없앱니다 — 한 줄 지우고 다시 돌려보세요'
+      : '지금은 첨부하지 않은 상태로 돌고 있습니다') + '</span></h3>' +
+      '<div class="panel">' +
+        '<div class="row"><button class="btn sm" data-act="togmdedit">' + (S.mdOpen[S.focus] ? '접기' : '펼쳐서 고치기') + '</button>' +
+          '<span class="ev dim">' + (ds.md ? ds.md.split('\n').length + '줄' : '설명서 없음') + '</span></div>' +
+        (S.mdOpen[S.focus]
+          ? '<textarea id="mdEdit" rows="14" style="margin-top:10px">' + esc(ds.md || '') + '</textarea>' +
+            '<div class="row" style="margin-top:8px"><button class="btn pri sm" data-act="remd">고쳐서 다시 돌리기</button>' +
+            '<span class="ev dim">문법: <span class="mono">- `컬럼명`: 단위: °F×10, 표준 필드: process_temp_c, 1=정상, 0=불량</span></span></div>'
+          : '') +
+      '</div></div>' +
+
+    '<div class="sec"><h3>컬럼별 처리 <span class="hint">기각된 가설도 지우지 않고 남깁니다</span></h3>' +
+      run.decisions.map(function (d, i) { return trackHtml(S.focus, d, i); }).join('') +
+    '</div>' +
+
+    '<div class="sec"><div class="row">' +
+      (pend ? '<button class="btn" data-act="autoall" data-id="' + S.focus + '">남은 ' + pend + '건 일괄 확답 (시연용)</button>' : '') +
+      '<button class="btn pri" data-act="publish" data-id="' + S.focus + '">표준 데이터로 발행하기</button>' +
+      (pend ? '<span class="ev dim">확답 대기 컬럼은 발행에서 빠집니다.</span>' : '') +
+    '</div></div>';
+  }
+
+  /* =========================================================================
+     ③ 표준 데이터
+     ======================================================================= */
+  function allPublished() {
+    var out = [];
+    Object.keys(S.published).forEach(function (id) {
+      S.published[id].forEach(function (r) { out.push(r); });
+    });
+    return out;
+  }
+
+  function convergence() {
+    if (!S.published.A || !S.published.B || !S.published.C) return '';
+    var raw = {
+      A: ASKB.SAMPLES.filter(function (s) { return s.id === 'A'; })[0],
+      B: ASKB.SAMPLES.filter(function (s) { return s.id === 'B'; })[0],
+      C: ASKB.SAMPLES.filter(function (s) { return s.id === 'C'; })[0]
+    };
+    var lanes = ['A', 'B', 'C'].map(function (k) {
+      var lines = raw[k].csv.split('\n');
+      return '<div class="cl"><div class="who">' + esc(raw[k].short) + '</div>' +
+        '<div class="raw">' + esc(lines[0]) + '  ›  ' + esc(lines[1]) + '</div></div>';
+    }).join('');
+    var r = ['A', 'B', 'C'].map(function (k) { return S.published[k][0]; });
+    var same = r[0].timestamp === r[1].timestamp && r[1].timestamp === r[2].timestamp &&
+      r[0].verdict === r[1].verdict && r[1].verdict === r[2].verdict;
+    var spread = Math.max.apply(null, r.map(function (x) { return x.process_temp_c; })) -
+                 Math.min.apply(null, r.map(function (x) { return x.process_temp_c; }));
+    return '<div class="sec"><h3>같은 사실인지 확인하기 <span class="hint">A·B·C사 첫 행</span></h3>' +
+      '<div class="conv"><h4>세 가지 기록이 한 줄로 모입니다.</h4>' +
+      '<div class="sub">컬럼명도 날짜 형식도 단위도 판정 표기도 달랐던 세 줄입니다.</div>' +
+      '<div class="lanes">' + lanes + '</div>' +
+      '<div class="out"><div class="who">표준</div><div class="std">' +
+        'timestamp=' + esc(r[0].timestamp) + ' · process_temp_c=' + num(r[0].process_temp_c, 1) +
+        ' · verdict=' + esc(r[0].verdict) + '</div></div>' +
+      '<div class="foot">' + (same
+        ? '시각과 판정은 완전히 일치합니다. 온도는 ' +
+          r.map(function (x) { return num(x.process_temp_c, 3); }).join(' / ') +
+          ' 로 최대 ' + num(spread, 3) + ' °C 차이가 남습니다 — 화씨 원본을 섭씨로 옮길 때 생기는 반올림 잔차이며, 같은 사실임을 확인할 수 있는 수준입니다.'
+        : '아직 세 줄이 일치하지 않습니다. 확답이 끝나지 않은 컬럼이 있는지 확인해 주세요.') +
+      '</div></div></div>';
+  }
+
+  function beforeAfter() {
+    var dss = Object.keys(S.intake).map(function (id) { return S.intake[id]; });
+    if (!dss.length) return '';
+    var naive = ASKB.naiveMerge(dss);
+    var key = Object.keys(naive)[0];
+    if (!key) return '';
+    var nv = naive[key];
+    var rows = allPublished();
+    var fields = ['process_temp_c', 'component_temp_c', 'ambient_temp_c'];
+    var after = fields.map(function (f) {
+      var v = rows.map(function (r) { return r[f]; }).filter(function (x) { return typeof x === 'number'; });
+      if (!v.length) return null;
+      return { f: f, n: v.length, min: Math.min.apply(null, v), max: Math.max.apply(null, v) };
+    }).filter(Boolean);
+    if (!after.length) return '';
+
+    var lo = 0, hi = Math.max(nv.max, 1);
+    function bar(nm, min, max, color, n) {
+      var l = (min - lo) / (hi - lo) * 100, w = Math.max((max - min) / (hi - lo) * 100, 0.8);
+      return '<div class="bar"><div class="nm">' + esc(nm) + '</div>' +
+        '<div class="tr"><span class="fl" style="left:' + l + '%;width:' + w + '%;background:' + color + '"></span></div>' +
+        '<div class="vl">' + num(min, 1) + ' ~ ' + num(max, 1) + ' <span style="color:var(--muted-2)">· ' + n + '개</span></div></div>';
+    }
+    return '<div class="sec"><h3>표준화가 실제로 바꾼 것 <span class="hint">같은 축에 올려 비교</span></h3>' +
+      '<div class="panel"><div class="bars">' +
+        bar('표준화 전 · ' + key, nv.min, nv.max, 'var(--clay)', nv.n) +
+        after.map(function (a) { return bar('표준화 후 · ' + a.f, a.min, a.max, 'var(--teal)', a.n); }).join('') +
+      '</div>' +
+      '<div class="note bad" style="margin-top:14px">전에는 온도로 읽히는 컬럼 ' + nv.names.length + '개(' +
+        esc(nv.names.join(', ')) + ')가 ' + num(nv.min, 1) + '부터 ' + num(nv.max, 1) +
+        '까지 한 축에 뒤섞여 있었습니다. 이 상태로 모델에 넣으면 켈빈과 화씨 10배를 같은 값으로 배웁니다.</div>' +
+      '<div class="note good" style="margin-top:8px">표준화 후에는 지점이 다른 온도가 각자의 필드로 갈라지고, 단위가 섭씨 하나로 통일됩니다.</div>' +
+      '</div></div>';
+  }
+
+  function viewData() {
+    var rows = allPublished();
+    if (!rows.length) {
+      return '<div class="eyebrow">③ 함께 학습한다</div><h2>아직 발행된 표준 데이터가 없습니다.</h2>' +
+        '<div class="empty" style="margin-top:20px"><b>발행 대기</b>' +
+        '표준화 단계에서 확답을 마치고 발행하면 여기에 표준 스키마로 쌓입니다.' +
+        '<div style="margin-top:14px"><button class="btn pri" data-act="go" data-v="std">표준화 단계로</button></div></div>';
+    }
+    var byCo = {};
+    rows.forEach(function (r) { byCo[r.__source] = (byCo[r.__source] || 0) + 1; });
+    var synth = rows.filter(function (r) { return r.__synthetic_time; }).length;
+    var nok = rows.filter(function (r) { return r.verdict === 'NOK'; }).length;
+    var extras = rows.some(function (r) { return r.__extra; });
+
+    var cols = ASKB.SCHEMA_ORDER.filter(function (f) {
+      return rows.some(function (r) { return r[f] !== null && r[f] !== undefined; });
+    });
+
+    var head = '<tr>' + cols.map(function (f) {
+      return '<th>' + f + '<small>' + esc(ASKB.SCHEMA[f].unit) + '</small></th>';
+    }).join('') + (extras ? '<th>부가정보<small>스키마 밖</small></th>' : '') +
+      '<th>출처<small>발행 기업</small></th></tr>';
+
+    var body = rows.slice(0, 60).map(function (r) {
+      return '<tr>' + cols.map(function (f) {
+        var v = r[f];
+        if (v === null || v === undefined) return '<td class="nul">—</td>';
+        if (f === 'verdict') return '<td class="' + (v === 'OK' ? 'ok' : 'nok') + '">' + v + '</td>';
+        var c = ASKB.SCHEMA[f].kind === 'num' || f === 'timestamp' ? 'num' : 'mono';
+        return '<td class="' + c + '">' + esc(v) + (f === 'timestamp' && r.__synthetic_time ? ' <span class="tag a">합성</span>' : '') + '</td>';
+      }).join('') +
+      (extras ? '<td class="mono nul">' + (r.__extra ? Object.keys(r.__extra).map(function (k) { return esc(k) + '=' + esc(r.__extra[k]); }).join(' ') : '—') + '</td>' : '') +
+      '<td class="mono">' + esc(r.__source) + '</td></tr>';
+    }).join('');
+
+    var schema = ASKB.SCHEMA_ORDER.map(function (f) {
+      var s = ASKB.SCHEMA[f];
+      return '<tr><td class="mono"><b>' + f + '</b>' + (s.required ? ' <span class="tag c">필수</span>' : '') + '</td>' +
+        '<td class="mono">' + esc(s.unit) + '</td>' +
+        '<td>' + esc(s.desc) + '</td>' +
+        '<td class="mono nul">' + (s.range ? s.range[0] + ' ~ ' + s.range[1] : '—') + '</td></tr>';
+    }).join('');
+
+    return '' +
+    '<div class="eyebrow">③ 함께 학습한다</div>' +
+    '<h2>' + Object.keys(byCo).length + '곳의 기록이 한 스키마로 쌓였습니다.</h2>' +
+    '<p class="lede">표준은 새로 만들지 않았습니다. EUROMAP 77 · OPC UA의 명명 규칙과 단위 체계에 맞춰 옮겼을 뿐입니다.</p>' +
+
+    '<div class="sec"><div class="grid g4">' +
+      '<div class="kpi t"><div class="k">표준 행</div><div class="v">' + rows.length + '</div><div class="d">발행 완료</div></div>' +
+      '<div class="kpi"><div class="k">참여 기업</div><div class="v">' + Object.keys(byCo).length + '</div><div class="d">' +
+        esc(Object.keys(byCo).map(function (k) { return k.replace(/\s*\(.*\)/, ''); }).join(' · ')) + '</div></div>' +
+      '<div class="kpi c"><div class="k">불량 사례</div><div class="v">' + nok + '</div><div class="d">' +
+        (rows.length ? ASKB.round(nok / rows.length * 100, 1) + '% — 학습에서 가장 귀한 행' : '') + '</div></div>' +
+      '<div class="kpi a"><div class="k">합성 시각</div><div class="v">' + synth + '</div><div class="d">' +
+        (synth ? '시각 컬럼이 없던 반입분 — 표시해 둡니다' : '전부 원본 시각') + '</div></div>' +
+    '</div></div>' +
+
+    convergence() +
+
+    '<div class="sec"><h3>표준 데이터 <span class="hint">앞 60행</span></h3>' +
+      '<div class="panel flush"><div class="tblwrap"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></div>' +
+      '<div class="row" style="margin-top:12px">' +
+        '<button class="btn pri sm" data-act="dl" data-v="csv">표준 CSV 내려받기</button>' +
+        '<button class="btn sm" data-act="dl" data-v="jsonl">학습용 JSONL</button>' +
+        '<button class="btn sm" data-act="dl" data-v="schema">스키마 JSON</button>' +
+        '<button class="btn dark sm" data-act="go" data-v="share">데이터 교환으로 →</button>' +
+      '</div></div>' +
+
+    beforeAfter() +
+
+    '<div class="sec"><h3>표준 스키마 <span class="hint">이 MVP가 옮겨 담는 그릇</span></h3>' +
+      '<div class="panel flush"><div class="tblwrap"><table><thead><tr>' +
+      '<th>필드</th><th>단위</th><th>뜻</th><th>물리 범위</th></tr></thead><tbody>' + schema + '</tbody></table></div></div>' +
+      '<div class="note" style="margin-top:10px">물리 범위는 장식이 아닙니다. ③ 검증 코드가 단위 가설을 기각할 때 쓰는 근거입니다.</div>' +
+    '</div>';
+  }
+
+  /* =========================================================================
+     ④ 매핑 사전
+     ======================================================================= */
+  function viewDict() {
+    var keys = Object.keys(S.dictionary);
+    var saved = 0;
+    keys.forEach(function (k) { saved += Math.max(0, (S.dictionary[k].uses || 1) - 1); });
+
+    if (!keys.length) {
+      return '<div class="eyebrow">④ 쌓인다</div><h2>매핑 사전이 아직 비어 있습니다.</h2>' +
+        '<div class="empty" style="margin-top:20px"><b>승인이 곧 적립입니다</b>' +
+        '표준화 단계에서 발행하면 그때 확정된 매핑이 설비별로 여기에 쌓입니다. 같은 설비를 다시 처리할 때 그만큼 덜 묻습니다.' +
+        '<div style="margin-top:14px"><button class="btn pri" data-act="go" data-v="std">표준화 단계로</button></div></div>';
+    }
+
+    var byEq = {};
+    keys.forEach(function (k) {
+      var e = S.dictionary[k];
+      (byEq[e.equipment] = byEq[e.equipment] || []).push(e);
+    });
+
+    var groups = Object.keys(byEq).map(function (eq) {
+      var es = byEq[eq];
+      return '<div class="dictgrp"><div class="gh"><b>' + esc(eq) + '</b>' +
+        '<span class="tag n">매핑 ' + es.length + '개</span>' +
+        '<span class="ev dim">' + esc(Array.from(new Set(es.map(function (e) { return e.company; }))).join(' · ')) + '</span></div>' +
+        es.map(function (e) {
+          return '<div class="dictrow">' +
+            '<div><span class="a">' + esc(e.header) + '</span>' +
+              '<div class="m">' + esc(e.approvedBy) + ' · ' + esc(e.approvedAt) + ' 확정</div></div>' +
+            '<div><span class="b">' + (e.field || '제외/부가') + '</span>' +
+              '<div class="m">' + esc(e.unitLabel || '') +
+              (e.timezone ? ' · ' + esc(e.timezone) : '') +
+              (e.enumMap ? ' · ' + Object.keys(e.enumMap).map(function (k2) { return k2 + '→' + e.enumMap[k2]; }).join(' ') : '') +
+              '</div></div>' +
+            '<div><span class="tag ' + (e.uses > 1 ? 't' : 'n') + '">재사용 ' + ((e.uses || 1) - 1) + '회</span></div>' +
+          '</div>';
+        }).join('') + '</div>';
+    }).join('');
+
+    return '' +
+    '<div class="eyebrow">④ 쌓인다</div>' +
+    '<h2>같은 설비를 처리할수록 물어볼 것이 줄어듭니다.</h2>' +
+    '<p class="lede">사람이 한 번 확답한 것은 설비별 매핑 사전에 남습니다. 다음 배치는 추측 단계를 건너뜁니다. ' +
+      '다만 검증 코드는 건너뛰지 않습니다 — 사전이 맞아도 값이 말이 되는지는 매번 확인합니다.</p>' +
+
+    '<div class="sec"><div class="grid g3">' +
+      '<div class="kpi t"><div class="k">적립된 매핑</div><div class="v">' + keys.length + '</div><div class="d">설비 ' + Object.keys(byEq).length + '종</div></div>' +
+      '<div class="kpi"><div class="k">재사용 횟수</div><div class="v">' + saved + '</div><div class="d">그만큼 사람에게 묻지 않았습니다</div></div>' +
+      '<div class="kpi a"><div class="k">사전 사용</div><div class="v">' + (S.useDict ? 'ON' : 'OFF') + '</div>' +
+        '<div class="d">표준화 화면에서 껐다 켜며 비교할 수 있습니다</div></div>' +
+    '</div></div>' +
+
+    '<div class="sec"><h3>설비별 매핑 <span class="hint">원본 컬럼 → 표준 필드</span></h3>' + groups +
+      '<div class="row"><button class="btn sm" data-act="dl" data-v="dict">사전 JSON 내려받기</button>' +
+      '<button class="btn dgr sm" data-act="cleardict">사전 비우기</button></div></div>' +
+
+    '<div class="sec"><h3>감사 로그 <span class="hint">누가 언제 무엇을 확정했는지</span></h3>' +
+      '<div class="panel flush">' + (S.log.length
+        ? S.log.slice(0, 40).map(function (l) {
+            return '<div class="logrow"><div class="at">' + esc(l.at) + '</div>' +
+              '<div><span class="tag n">' + esc(l.kind) + '</span></div>' +
+              '<div class="ms">' + esc(l.msg) + ' <span style="color:var(--muted-2)">— ' + esc(l.who) + '</span></div></div>';
+          }).join('')
+        : '<div class="logrow"><div class="ms">기록이 없습니다.</div></div>') +
+      '</div></div>';
+  }
+
+  /* =========================================================================
+     ⑤ 데이터 교환
+     ======================================================================= */
+  function contributions() {
+    var c = {};
+    Object.keys(S.published).forEach(function (id) {
+      if (!S.published[id].length) return;
+      c[id] = { company: S.intake[id] ? S.intake[id].short : id, rows: S.published[id] };
+    });
+    return c;
+  }
+  function setting(id) {
+    if (!S.settings[id]) S.settings[id] = ASKB.defaultShareSetting();
+    return S.settings[id];
+  }
+
+  function viewShare() {
+    var contrib = contributions();
+    var ids = Object.keys(contrib);
+    if (!ids.length) {
+      return '<div class="eyebrow">⑤ 나눈다</div><h2>공유할 표준 데이터가 없습니다.</h2>' +
+        '<div class="empty" style="margin-top:20px"><b>표준화가 먼저입니다</b>' +
+        '형식이 제각각인 원본은 나눠도 서로 못 씁니다. 표준으로 옮긴 뒤에야 합칠 수 있습니다.' +
+        '<div style="margin-top:14px"><button class="btn pri" data-act="go" data-v="std">표준화 단계로</button></div></div>';
+    }
+    ids.forEach(setting);
+    var pool = ASKB.buildPool(contrib, S.settings);
+    var sum = ASKB.poolSummary(pool, contrib);
+
+    var cards = ids.map(function (id) {
+      var st = S.settings[id], c = contrib[id];
+      var has = {};
+      c.rows.forEach(function (r) {
+        ASKB.SCHEMA_ORDER.forEach(function (f) { if (r[f] !== null && r[f] !== undefined) has[f] = true; });
+      });
+      var chips = ASKB.SCHEMA_ORDER.filter(function (f) { return has[f]; }).map(function (f) {
+        var lock = f === 'timestamp';
+        return '<span class="fchip ' + (st.fields[f] ? 'on' : '') + (lock ? ' lock' : '') + '"' +
+          (lock ? ' title="시각은 합칠 때 기준이 되므로 항상 올립니다"'
+                : ' data-act="togfield" data-id="' + id + '" data-v="' + f + '"') + '>' + f + '</span>';
+      }).join('');
+      var absent = ASKB.SCHEMA_ORDER.filter(function (f) { return !has[f]; });
+      return '<div class="cocard"><div class="ch"><b>' + esc(c.company) + '</b>' +
+        '<span class="tag n">' + c.rows.length + '행</span>' +
+        (st.enabled ? '<span class="tag t">공유 중</span>' : '<span class="tag c">중지</span>') +
+        '<span class="sp" style="flex:1"></span>' +
+        '<label class="sw"><input type="checkbox" data-act="togshare" data-id="' + id + '" ' + (st.enabled ? 'checked' : '') + '>공유</label>' +
+        '</div><div class="cb">' +
+        '<div class="row"><span style="font-size:11.5px;font-weight:700;color:var(--muted)">판정 공개 방식</span>' +
+          '<select data-act="mode" data-id="' + id + '">' +
+          Object.keys(ASKB.SHARE_MODES).map(function (m) {
+            return '<option value="' + m + '"' + (st.mode === m ? ' selected' : '') + '>' + esc(ASKB.SHARE_MODES[m].label) + '</option>';
+          }).join('') + '</select>' +
+          '<span style="font-size:11.5px;font-weight:700;color:var(--muted);margin-left:6px">최소 행수</span>' +
+          '<input type="number" min="1" max="500" value="' + st.minRows + '" style="width:70px" data-act="minrows" data-id="' + id + '">' +
+        '</div>' +
+        (st.mode !== 'pooled'
+          ? '<div class="note warn" style="margin-top:9px">기본값에서 벗어났습니다 — ' + esc(ASKB.SHARE_MODES[st.mode].desc) + '</div>'
+          : '') +
+        '<div style="margin-top:11px"><span style="font-size:11.5px;font-weight:700;color:var(--muted)">올릴 필드 — 눌러서 끄고 켭니다</span>' +
+          '<div class="fchips">' + chips + '</div>' +
+          (absent.length ? '<div class="ev dim" style="margin-top:6px">이 기업이 보유하지 않은 필드: ' +
+            esc(absent.join(', ')) + '</div>' : '') +
+        '</div>' +
+        '</div></div>';
+    }).join('');
+
+    var poolCols = ASKB.SCHEMA_ORDER.filter(function (f) {
+      return pool.rows.some(function (r) { return r[f] !== null && r[f] !== undefined; });
+    });
+    var poolTbl = '<table><thead><tr><th>기업<small>익명 처리</small></th>' +
+      poolCols.map(function (f) { return '<th>' + f + '<small>' + esc(ASKB.SCHEMA[f].unit) + '</small></th>'; }).join('') +
+      '</tr></thead><tbody>' + pool.rows.slice(0, 40).map(function (r) {
+        return '<tr><td class="mono nul">' + esc(r.__label) + '</td>' + poolCols.map(function (f) {
+          var v = r[f];
+          if (v === null || v === undefined) return '<td class="nul">—</td>';
+          if (f === 'verdict') return '<td class="' + (v === 'OK' ? 'ok' : 'nok') + '">' + v + '</td>';
+          return '<td class="num">' + esc(v) + '</td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+
+    var reqs = S.requests.length
+      ? S.requests.map(function (q, i) {
+          return '<div class="logrow"><div class="at">' + esc(q.at) + '</div>' +
+            '<div><span class="tag ' + (q.status === '승인' ? 't' : q.status === '거절' ? 'c' : 'a') + '">' + esc(q.status) + '</span></div>' +
+            '<div class="ms">' + esc(q.from) + ' → ' + esc(q.to) + ' · ' + esc(q.fields) +
+            (q.status === '대기' ? ' <button class="btn sm" data-act="req" data-i="' + i + '" data-v="승인">승인</button>' +
+              ' <button class="btn dgr sm" data-act="req" data-i="' + i + '" data-v="거절">거절</button>' : '') +
+            '</div></div>';
+        }).join('')
+      : '<div class="logrow"><div class="ms">요청이 없습니다.</div></div>';
+
+    var opts = ids.map(function (id) { return '<option value="' + id + '">' + esc(contrib[id].company) + '</option>'; }).join('');
+
+    return '' +
+    '<div class="eyebrow">⑤ 나눈다</div>' +
+    '<h2>표준으로 옮긴 뒤에야 합칠 수 있습니다.</h2>' +
+    '<p class="lede">올릴 범위는 기업이 정합니다. 기본값은 자사 불량률이 역산되지 않는 단위입니다 — ' +
+      '판정을 함께 올리되 기업 식별자를 지우고 다른 기업 행과 섞어 발행합니다.</p>' +
+
+    '<div class="sec"><div class="grid g4">' +
+      '<div class="kpi t"><div class="k">공유 풀</div><div class="v">' + sum.rows + '</div><div class="d">' + sum.companies + '곳이 올린 행</div></div>' +
+      '<div class="kpi"><div class="k">불량 사례</div><div class="v">' + sum.nok + '</div><div class="d">' +
+        (sum.nokRate !== null ? '풀 전체 ' + ASKB.round(sum.nokRate * 100, 1) + '% — 기업별로는 역산되지 않습니다' : '판정 미공개') + '</div></div>' +
+      '<div class="kpi a"><div class="k">보류</div><div class="v">' + pool.held.length + '</div><div class="d">' +
+        (pool.held.length ? '재식별 위험 또는 공유 중지' : '보류 없음') + '</div></div>' +
+      '<div class="kpi"><div class="k">풀에 담긴 필드</div><div class="v">' + poolCols.length + '</div>' +
+        '<div class="d">각 기업이 허용한 범위의 합집합 — 안 올린 칸은 비어 있습니다</div></div>' +
+    '</div></div>' +
+
+    '<div class="sec"><h3>기업별 공유 설정 <span class="hint">각자 자기 범위를 정합니다</span></h3>' +
+      '<div class="note good" style="margin-bottom:12px">기본값은 <b>' + esc(ASKB.SHARE_MODES.pooled.label) + '</b>입니다 — ' +
+        esc(ASKB.SHARE_MODES.pooled.desc) + ' 기본값을 바꾼 기업은 카드에 그 사실이 표시됩니다.</div>' +
+      '<div class="grid g2">' + cards + '</div></div>' +
+
+    (pool.held.length
+      ? '<div class="sec"><div class="note warn"><b>보류된 기여</b><br>' +
+        pool.held.map(function (h) { return esc(h.company) + ' — ' + esc(h.reason); }).join('<br>') + '</div></div>' : '') +
+    (pool.notes.length
+      ? '<div class="sec"><div class="note">' + pool.notes.map(esc).join('<br>') + '</div></div>' : '') +
+
+    '<div class="sec"><h3>공유 풀 <span class="hint">앞 40행 · 행 순서는 섞여 있습니다</span></h3>' +
+      '<div class="panel flush"><div class="tblwrap">' + poolTbl + '</div></div>' +
+      '<div class="row" style="margin-top:12px">' +
+        '<button class="btn pri sm" data-act="dl" data-v="pool">공유 풀 CSV</button>' +
+        '<button class="btn sm" data-act="dl" data-v="poolj">학습용 JSONL</button>' +
+      '</div>' +
+      '<div class="note good" style="margin-top:12px">이 표가 목적입니다. ' + sum.companies +
+        '곳의 불량 사례가 같은 컬럼명, 같은 단위, 같은 시각 체계로 한 파일에 들어왔습니다.</div>' +
+    '</div>' +
+
+    '<div class="sec"><h3>열람 요청 <span class="hint">기여한 만큼 열람합니다</span></h3>' +
+      '<div class="panel"><div class="row">' +
+        '<select data-act="reqfrom">' + opts + '</select><span class="ev dim">가</span>' +
+        '<select data-act="reqto">' + opts + '</select><span class="ev dim">의</span>' +
+        '<select data-act="reqfield"><option value="전체 표준 필드">전체 표준 필드</option>' +
+          ASKB.SCHEMA_ORDER.map(function (f) { return '<option value="' + f + '">' + f + '</option>'; }).join('') +
+        '</select><span class="ev dim">열람을 요청</span>' +
+        '<button class="btn sm" data-act="newreq">요청 보내기</button>' +
+      '</div></div>' +
+      '<div class="panel flush" style="margin-top:10px">' + reqs + '</div></div>' +
+
+    '<div class="sec"><h3>감사 로그 <span class="hint">공유 설정 변경과 열람 이력도 남습니다</span></h3>' +
+      '<div class="panel flush">' + (S.log.length
+        ? S.log.slice(0, 30).map(function (l) {
+            return '<div class="logrow"><div class="at">' + esc(l.at) + '</div>' +
+              '<div><span class="tag n">' + esc(l.kind) + '</span></div>' +
+              '<div class="ms">' + esc(l.msg) + ' <span style="color:var(--muted-2)">— ' + esc(l.who) + '</span></div></div>';
+          }).join('')
+        : '<div class="logrow"><div class="ms">기록이 없습니다.</div></div>') + '</div></div>';
+  }
+
+  /* =========================================================================
+     렌더 + 이벤트
+     ======================================================================= */
+  var VIEWS = [
+    { id: 'intake', t: '반입', s: '원본 그대로 올린다' },
+    { id: 'std', t: '표준화', s: '네 단계로 옮긴다' },
+    { id: 'data', t: '표준 데이터', s: '한 스키마로 쌓인다' },
+    { id: 'dict', t: '매핑 사전', s: '질문이 줄어든다' },
+    { id: 'share', t: '데이터 교환', s: '기업끼리 합친다' }
+  ];
+
+  function render() {
+    var pend = 0;
+    Object.keys(S.runs).forEach(function (id) { pend += ASKB.pendingCount(S.runs[id]); });
+    var rows = allPublished().length;
+    var poolRows = 0;
+    try { poolRows = ASKB.buildPool(contributions(), S.settings).rows.length; } catch (e) {}
+
+    $('#stats').innerHTML =
+      '<span class="stat">반입 <b>' + Object.keys(S.intake).length + '</b></span>' +
+      '<span class="stat">확답 대기 <b>' + pend + '</b></span>' +
+      '<span class="stat">표준 행 <b>' + rows + '</b></span>' +
+      '<span class="stat">사전 <b>' + Object.keys(S.dictionary).length + '</b></span>' +
+      '<span class="stat">공유 풀 <b>' + poolRows + '</b></span>';
+
+    $('#rail').innerHTML = VIEWS.map(function (v, i) {
+      var badge = '';
+      if (v.id === 'std' && pend) badge = '<span class="badge">' + pend + '</span>';
+      var done = (v.id === 'intake' && Object.keys(S.intake).length) ||
+                 (v.id === 'data' && rows) || (v.id === 'dict' && Object.keys(S.dictionary).length) ||
+                 (v.id === 'share' && poolRows);
+      return '<div class="station ' + (S.view === v.id ? 'on' : '') + (done ? ' done' : '') +
+        '" tabindex="0" data-act="go" data-v="' + v.id + '">' +
+        '<div class="n">' + (i + 1) + '</div><div><div class="t">' + v.t + '</div><div class="s">' + v.s + '</div></div>' +
+        badge + '</div>';
+    }).join('');
+
+    var html = S.view === 'intake' ? viewIntake()
+      : S.view === 'std' ? viewStd()
+      : S.view === 'data' ? viewData()
+      : S.view === 'dict' ? viewDict() : viewShare();
+    $('#stage').innerHTML = html;
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  function doPublish(id) {
+    var run = S.runs[id]; if (!run) return;
+    var pend = ASKB.pendingCount(run);
+    var rows = ASKB.publish(run);
+    S.published[id] = rows;
+    var res = ASKB.commitToDictionary(S.dictionary, run, S.approver);
+    setting(id);
+    logIt('발행', S.intake[id].short + ' ' + rows.length + '행을 표준 데이터로 발행 · 매핑 ' +
+      res.added + '건 신규 적립, ' + res.updated + '건 갱신' + (pend ? ' · 확답 대기 ' + pend + '개 컬럼 제외' : ''));
+    persist();
+    toast(rows.length + '행 발행 · 매핑 ' + (res.added + res.updated) + '건 사전에 적립');
+    S.view = 'data'; render();
+  }
+
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-act]'); if (!t) return;
+    var a = t.getAttribute('data-act'), id = t.getAttribute('data-id'), v = t.getAttribute('data-v');
+    if (t.tagName === 'INPUT' || t.tagName === 'SELECT') return;
+
+    if (a === 'go') { S.view = v; render(); return; }
+
+    if (a === 'intake') {
+      var ds = ASKB.loadSample(id);
+      S.intake[id] = ds; S.focus = id; runFor(id);
+      logIt('반입', ds.company + ' · ' + ds.headers.length + '열 ' + ds.rows.length + '행 반입 (원본 그대로)');
+      toast(ds.short + ' 반입 완료'); render(); return;
+    }
+    if (a === 'peekmd') { S.mdOpen['peek' + id] = !S.mdOpen['peek' + id]; render(); return; }
+
+    if (a === 'upload') {
+      var fc = $('#upCsv'), fm = $('#upMd');
+      if (!fc.files || !fc.files[0]) { toast('CSV 파일을 먼저 골라 주세요'); return; }
+      var co = ($('#upCo').value || '').trim() || '직접 반입';
+      var eq = ($('#upEq').value || '').trim() || 'CUSTOM-01';
+      var r1 = new FileReader();
+      r1.onload = function () {
+        var p = ASKB.parseCsv(r1.result);
+        if (!p.headers.length) { toast('CSV를 읽지 못했습니다'); return; }
+        function finish(mdText) {
+          var nid = 'U' + (Object.keys(S.intake).length + 1);
+          S.intake[nid] = {
+            id: nid, company: co, short: co.split(' ')[0], equipment: eq, note: '직접 올린 파일',
+            md: mdText || '', headers: p.headers, rows: p.rows, batch: 1,
+            timeBase: '2026-08-10T00:00:00Z', timeStepSec: 60
+          };
+          S.focus = nid; runFor(nid);
+          logIt('반입', co + ' · ' + p.headers.length + '열 ' + p.rows.length + '행 직접 반입');
+          toast(co + ' 반입 완료 — 표준화 단계로 넘어갑니다');
+          S.view = 'std'; render();
+        }
+        if (fm.files && fm.files[0]) {
+          var r2 = new FileReader();
+          r2.onload = function () { finish(r2.result); };
+          r2.readAsText(fm.files[0], 'utf-8');
+        } else finish('');
+      };
+      r1.readAsText(fc.files[0], 'utf-8');
+      return;
+    }
+
+    if (a === 'focus') { S.focus = id; render(); return; }
+    if (a === 'togmdedit') { S.mdOpen[S.focus] = !S.mdOpen[S.focus]; render(); return; }
+    if (a === 'remd') {
+      var ta = $('#mdEdit'); if (!ta) return;
+      S.intake[S.focus].md = ta.value;
+      runFor(S.focus);
+      logIt('설명서', S.intake[S.focus].short + ' 설비 설명서를 고쳐 파이프라인을 다시 돌렸습니다');
+      toast('설명서를 반영해 다시 돌렸습니다'); render(); return;
+    }
+
+    if (a === 'ans') {
+      var run = S.runs[id], dec = run.decisions[+t.getAttribute('data-i')];
+      var k = t.getAttribute('data-k'), ans = {};
+      ans[k] = (k === 'polarity') ? JSON.parse(v) : v;
+      ans.by = S.approver;
+      var r = ASKB.answerDecision(run, dec, ans);
+      logIt('확답', S.intake[id].short + ' · ' + dec.header + ' — ' + (r.note || k + ' 확정'));
+      toast(r.ok ? dec.header + ' 확정' : dec.header + ' — 남은 질문 ' + r.remaining + '건');
+      render(); return;
+    }
+    if (a === 'excl') {
+      var run2 = S.runs[id], dec2 = run2.decisions[+t.getAttribute('data-i')];
+      ASKB.answerDecision(run2, dec2, { declare: 'drop', by: S.approver });
+      logIt('확답', S.intake[id].short + ' · ' + dec2.header + ' 컬럼을 제외했습니다');
+      render(); return;
+    }
+    if (a === 'autoall') {
+      var run3 = S.runs[id], n = 0;
+      run3.decisions.forEach(function (d) {
+        if (d.status !== 'queued') return;
+        var guard = 0;
+        while (d.status === 'queued' && guard++ < 6) {
+          if (d.questions.length) {
+            var q = d.questions[0], ans2 = { by: S.approver + ' (일괄)' };
+            if (q.id === 'field') ans2.field = d.proposal.field || q.options[0];
+            else if (q.id === 'tz') ans2.tz = 'Asia/Seoul';
+            else if (q.id === 'timefmt') ans2.timefmt = q.options[0];
+            else if (q.id === 'polarity') ans2.polarity = q.guess;
+            else if (q.id === 'unmapped') ans2.declare = 'keep';
+            else break;
+            ASKB.answerDecision(run3, d, ans2);
+          } else if (d.survivors > 1 || d.survivors === 0) {
+            var sv = d.hypotheses.filter(function (h) { return !h.rejected; });
+            ASKB.answerDecision(run3, d, { unit: (sv[0] || d.hypotheses[0]).unit, by: S.approver + ' (일괄)' });
+          } else break;
+        }
+        n++;
+      });
+      logIt('확답', S.intake[id].short + ' · 남은 ' + n + '개 컬럼을 시연용 일괄 확답으로 확정했습니다');
+      toast(n + '개 컬럼 확답 완료'); render(); return;
+    }
+    if (a === 'publish') { doPublish(id); return; }
+
+    if (a === 'cleardict') {
+      S.dictionary = {}; persist();
+      logIt('사전', '매핑 사전을 비웠습니다');
+      runAll(); toast('사전을 비웠습니다'); render(); return;
+    }
+    if (a === 'reset') {
+      S = null; store.clear(); location.reload(); return;
+    }
+
+    if (a === 'togfield') {
+      var st = setting(id); st.fields[v] = !st.fields[v]; persist();
+      logIt('공유 설정', contributions()[id].company + ' — ' + v + (st.fields[v] ? ' 공개' : ' 비공개') + '로 변경');
+      render(); return;
+    }
+    if (a === 'req') {
+      var q2 = S.requests[+t.getAttribute('data-i')];
+      q2.status = v;
+      logIt('열람', q2.from + '의 ' + q2.to + ' 데이터 열람 요청을 ' + v + '했습니다');
+      render(); return;
+    }
+    if (a === 'newreq') {
+      var f = $('[data-act=reqfrom]').value, to = $('[data-act=reqto]').value, fl = $('[data-act=reqfield]').value;
+      var c2 = contributions();
+      if (f === to) { toast('자기 데이터는 요청할 필요가 없습니다'); return; }
+      S.requests.unshift({
+        at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        from: c2[f].company, to: c2[to].company, fields: fl, status: '대기'
+      });
+      logIt('열람', c2[f].company + '가 ' + c2[to].company + '의 ' + fl + ' 열람을 요청했습니다');
+      render(); return;
+    }
+
+    if (a === 'dl') {
+      var rows = allPublished();
+      if (v === 'csv') {
+        var cols = ASKB.SCHEMA_ORDER.concat(['__source']);
+        download('askbridge_standard.csv', ASKB.toCsv(cols, rows), 'text/csv');
+      } else if (v === 'jsonl') {
+        download('askbridge_standard.jsonl', rows.map(function (r) {
+          var o = {}; ASKB.SCHEMA_ORDER.forEach(function (f) { o[f] = r[f]; }); return JSON.stringify(o);
+        }).join('\n'), 'application/x-ndjson');
+      } else if (v === 'schema') {
+        download('askbridge_schema.json', JSON.stringify({
+          name: 'ASK Bridge 표준 스키마', basis: 'EUROMAP 77 / OPC UA 명명·단위 체계',
+          fields: ASKB.SCHEMA
+        }, null, 2), 'application/json');
+      } else if (v === 'dict') {
+        download('askbridge_mapping_dictionary.json', JSON.stringify(S.dictionary, null, 2), 'application/json');
+      } else if (v === 'pool' || v === 'poolj') {
+        var pool = ASKB.buildPool(contributions(), S.settings);
+        if (v === 'pool') download('askbridge_shared_pool.csv',
+          ASKB.toCsv(['__label'].concat(ASKB.SCHEMA_ORDER), pool.rows), 'text/csv');
+        else download('askbridge_shared_pool.jsonl', pool.rows.map(function (r) {
+          var o = {}; ASKB.SCHEMA_ORDER.forEach(function (f) { if (r[f] !== undefined) o[f] = r[f]; });
+          return JSON.stringify(o);
+        }).join('\n'), 'application/x-ndjson');
+      }
+      return;
+    }
+  });
+
+  document.addEventListener('change', function (ev) {
+    var t = ev.target.closest('[data-act]'); if (!t) return;
+    var a = t.getAttribute('data-act'), id = t.getAttribute('data-id');
+    if (a === 'togmd') {
+      S.useMd = t.checked; runAll();
+      logIt('설정', '설비 설명서 첨부를 ' + (S.useMd ? '켰습니다' : '껐습니다'));
+      render(); return;
+    }
+    if (a === 'togdict') {
+      S.useDict = t.checked; runAll();
+      logIt('설정', '매핑 사전 사용을 ' + (S.useDict ? '켰습니다' : '껐습니다'));
+      render(); return;
+    }
+    if (a === 'mode') {
+      setting(id).mode = t.value; persist();
+      logIt('공유 설정', contributions()[id].company + ' — 판정 공개 방식을 "' +
+        ASKB.SHARE_MODES[t.value].label + '"으로 변경');
+      render(); return;
+    }
+    if (a === 'minrows') {
+      setting(id).minRows = Math.max(1, +t.value || 1); persist(); render(); return;
+    }
+    if (a === 'togshare') {
+      setting(id).enabled = t.checked; persist();
+      logIt('공유 설정', contributions()[id].company + ' — 공유를 ' + (t.checked ? '재개' : '중지') + '했습니다');
+      render(); return;
+    }
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    var t = ev.target.closest && ev.target.closest('.station');
+    if (!t) return;
+    ev.preventDefault(); S.view = t.getAttribute('data-v'); render();
+  });
+
+  /* 시작: A·B·C사를 미리 반입해 두고 표준화 화면에서 바로 시연할 수 있게 */
+  ['A', 'B', 'C'].forEach(function (k) { S.intake[k] = ASKB.loadSample(k); });
+  S.focus = 'A';
+  runAll();
+  if (!S.log.length) logIt('반입', 'A·B·C사 원본을 시연용으로 미리 반입했습니다', '시스템');
+  render();
+})();
+
+</script>
+
+
+</body></html>
