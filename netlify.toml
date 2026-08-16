@@ -1,0 +1,14 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# 관리 화면은 검색엔진과 미리보기에서 제외한다.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
